@@ -133,17 +133,30 @@ export default function Home() {
           <p>Green：{docomoGreen.toFixed(0)}円（-{greenPoint.toFixed(0)}pt）</p>
         </div>
 
-        {/* 全社ランキング */}
-        <div className="bg-gray-50 p-3 rounded text-sm max-h-64 overflow-y-scroll">
-          {sorted.map((c, i) => (
-            <div key={i} className="flex justify-between border-b py-1">
-              <span>{i + 1}位 {c.name}</span>
-              <span>{c.cost.toFixed(0)}円</span>
-            </div>
-          ))}
-        </div>
+{/* 全社ランキング */}
+<div className="bg-gray-50 p-3 rounded text-sm max-h-64 overflow-y-scroll">
+  {sorted.map((c, i) => {
+    const isDocomo = c.name.includes("ドコモ");
+    const isBest = i === 0;
 
+    let style = "flex justify-between border-b py-1 px-2";
+
+    if (isDocomo && isBest) {
+      style += " bg-green-200 font-bold text-green-800";
+    } else if (isDocomo) {
+      style += " bg-yellow-100 font-bold";
+    } else if (isBest) {
+      style += " bg-green-100 font-bold";
+    }
+
+    return (
+      <div key={i} className={style}>
+        <span>
+          {i + 1}位 {c.name}
+          {isDocomo && " ←おすすめ"}
+        </span>
+        <span>{c.cost.toFixed(0)}円</span>
       </div>
-    </div>
-  );
-}
+    );
+  })}
+</div>
