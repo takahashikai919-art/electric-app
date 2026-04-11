@@ -46,6 +46,7 @@ export default function Home() {
   const companies = [
     { name: "北海道電力", rate: 1.0 },
     { name: "北ガス電気", rate: 0.98 },
+    { name: "コープでんき", rate: 0.97 }, // ←追加
     { name: "Looopでんき", rate: 0.95 },
     { name: "ENEOSでんき", rate: 0.98 },
     { name: "楽天でんき", rate: 1.0 },
@@ -118,7 +119,6 @@ export default function Home() {
           ))}
         </select>
 
-        {/* クロージングUI */}
         <div className="bg-red-100 p-4 rounded text-center font-bold mb-3">
           <p>現在：{currentCompany?.cost.toFixed(0)}円/月</p>
 
@@ -139,12 +139,10 @@ export default function Home() {
           </p>
         </div>
 
-        {/* 👇 自然な誘導 */}
         <p className="text-sm text-center text-gray-600">
           詳細はお気軽にご相談ください
         </p>
 
-        {/* 注意書き */}
         <p className="text-xs text-gray-500 mt-3 text-center">
           ※燃料費調整額・再生可能エネルギー発電促進賦課金は計算に含まれていません
         </p>
