@@ -4,11 +4,11 @@ import { useState } from "react";
 export default function Home() {
   const [kwh, setKwh] = useState(300);
   const [amp, setAmp] = useState(30);
-  const [career, setCareer] = useState("no"); // ドコモ回線
-  const [card, setCard] = useState("none"); // dカード
+  const [career, setCareer] = useState("no");
+  const [card, setCard] = useState("none");
 
-  // 🔌 基本料金（北海道電力）
-  const baseTable: any = {
+  // 基本料金（北海道電力）※ ← 修正済み（any削除）
+  const baseTable = {
     20: 759,
     30: 1138,
     40: 1518,
@@ -18,7 +18,7 @@ export default function Home() {
 
   const base = baseTable[amp] || 1138;
 
-  // ⚡ 従量料金
+  // 従量料金
   const tier1 = 35;
   const tier2 = 41;
   const tier3 = 45;
@@ -31,7 +31,7 @@ export default function Home() {
 
   const hokkaido = base + calc(kwh);
 
-  // 🎯 還元率ロジック
+  // 還元率
   let basicRate = 0.02;
   let greenRate = 0.04;
 
@@ -43,15 +43,15 @@ export default function Home() {
   if (card === "gold") greenRate += 0.01;
   if (card === "platinum") greenRate += 0.05;
 
-  // 💰 ポイント
+  // ポイント
   const basicPoint = hokkaido * basicRate;
   const greenPoint = (hokkaido + 500) * greenRate;
 
-  // 💸 実質料金
+  // 実質料金
   const docomoBasic = hokkaido - basicPoint;
   const docomoGreen = hokkaido + 500 - greenPoint;
 
-  // 🏢 他社（30社想定・倍率）
+  // 他社
   const companies = [
     { name: "北海道電力", cost: hokkaido },
     { name: "Looopでんき", cost: hokkaido * 0.95 },
@@ -101,11 +101,18 @@ export default function Home() {
         </h1>
 
         {/* 入力 */}
-        <input type="number" value={kwh} onChange={(e) => setKwh(Number(e.target.value))}
-          className="w-full border p-2 mb-2 rounded" placeholder="使用量 kWh" />
+        <input
+          type="number"
+          value={kwh}
+          onChange={(e) => setKwh(Number(e.target.value))}
+          className="w-full border p-2 mb-2 rounded"
+        />
 
-        <select onChange={(e) => setAmp(Number(e.target.value))}
-          className="w-full border p-2 mb-2 rounded">
+        <select
+          value={amp}
+          onChange={(e) => setAmp(Number(e.target.value))}
+          className="w-full border p-2 mb-2 rounded"
+        >
           <option value="20">20A</option>
           <option value="30">30A</option>
           <option value="40">40A</option>
@@ -113,73 +120,70 @@ export default function Home() {
           <option value="60">60A</option>
         </select>
 
-        <select onChange={(e) => setCareer(e.target.value)}
-          className="w-full border p-2 mb-2 rounded">
+        <select
+          value={career}
+          onChange={(e) => setCareer(e.target.value)}
+          className="w-full border p-2 mb-2 rounded"
+        >
           <option value="no">ドコモ回線なし</option>
           <option value="docomo">ドコモ回線あり</option>
         </select>
 
-        <select onChange={(e) => setCard(e.target.value)}
-          className="w-full border p-2 mb-4 rounded">
+        <select
+          value={card}
+          onChange={(e) => setCard(e.target.value)}
+          className="w-full border p-2 mb-4 rounded"
+        >
           <option value="none">カードなし</option>
           <option value="regular">dカード</option>
           <option value="gold">dカードGOLD</option>
           <option value="platinum">PLATINUM</option>
         </select>
 
-        {/* ドコモ結果 */}
-        <div className="bg-yellow-50 p-3 rounded mb-4 text-sm">
-          <p>Basic：{docomoBasic.toFixed(0)}円（-{basicPoint.toFixed(0)}pt）</p>
-          <p>Green：{docomoGreen.toFixed(0)}円（-{greenPoint.toFixed(0)}pt）</p>
+        {/* ドコモ固定 */}
+        <div className="bg-yellow-50 p-3 rounded mb-3">
+          <h2 className="font-bold text-center mb-2">
+            おすすめ（ドコモでんき）
+          </h2>
+
+          {["ドコモでんき Basic", "ドコモでんき Green"].map((name) => {
+            const target = all.find(c => c.name === name);
+            if (!target) return null;
+
+            const rank =
+              [...all].sort((a, b) => a.cost - b.cost)
+              .findIndex(x => x.name === name) + 1;
+
+            return (
+              <div key={name} className="flex justify-between bg-yellow-200 font-bold p-2 rounded mb-2">
+                <span>
+                  {name}（{rank}位）
+                  {rank === 1 && " ←最安！"}
+                </span>
+                <span>{target.cost.toFixed(0)}円</span>
+              </div>
+            );
+          })}
+
+          <p className="text-xs text-center mt-2">
+            Basic還元：{basicPoint.toFixed(0)}pt / Green還元：{greenPoint.toFixed(0)}pt
+          </p>
         </div>
 
-{/* ドコモ固定表示 */}
-<div className="bg-yellow-50 p-3 rounded mb-3">
-  <h2 className="font-bold mb-2 text-center">おすすめ（ドコモでんき）</h2>
-
-  {[...all]
-    .filter(c => c.name.includes("ドコモ"))
-    .map((c) => {
-      const rank =
-        [...all].sort((a, b) => a.cost - b.cost)
-        .findIndex(x => x.name === c.name) + 1;
-
-      return (
-        <div
-          key={c.name}
-          className="flex justify-between bg-yellow-200 font-bold p-2 rounded mb-2"
-        >
-          <span>
-            {c.name}（{rank}位）
-            {rank === 1 && " ←最安！"}
-          </span>
-          <span>{c.cost.toFixed(0)}円</span>
+        {/* ランキング */}
+        <div className="bg-gray-50 p-3 rounded text-sm max-h-64 overflow-y-scroll">
+          {sorted.map((c, i) => (
+            <div
+              key={i}
+              className={`flex justify-between border-b py-1 px-2 ${i === 0 ? "bg-green-100 font-bold" : ""}`}
+            >
+              <span>{i + 1}位 {c.name}</span>
+              <span>{c.cost.toFixed(0)}円</span>
+            </div>
+          ))}
         </div>
-      );
-    })}
-</div>
 
-{/* 全体ランキング */}
-<div className="bg-gray-50 p-3 rounded text-sm max-h-64 overflow-y-scroll">
-  {[...all]
-    .sort((a, b) => a.cost - b.cost)
-    .map((c, i) => {
-      const isDocomo = c.name.includes("ドコモ");
-
-      return (
-        <div
-          key={i}
-          className={`
-            flex justify-between border-b py-1 px-2
-            ${i === 0 ? "bg-green-100 font-bold" : ""}
-            ${isDocomo ? "text-yellow-700 font-bold" : ""}
-          `}
-        >
-          <span>
-            {i + 1}位 {c.name}
-          </span>
-          <span>{c.cost.toFixed(0)}円</span>
-        </div>
-      );
-    })}
-</div>
+      </div>
+    </div>
+  );
+}
