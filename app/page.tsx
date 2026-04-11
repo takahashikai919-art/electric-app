@@ -6,6 +6,7 @@ export default function Home() {
   const [amp, setAmp] = useState<number>(30);
   const [career, setCareer] = useState<string>("no");
   const [card, setCard] = useState<string>("none");
+  const [current, setCurrent] = useState<string>("北海道電力");
 
   const baseTable: Record<number, number> = {
     20: 759,
@@ -17,14 +18,10 @@ export default function Home() {
 
   const base = baseTable[amp] ?? 1138;
 
-  const tier1 = 35;
-  const tier2 = 41;
-  const tier3 = 45;
-
   const calc = (k: number) => {
-    if (k <= 120) return k * tier1;
-    if (k <= 300) return 120 * tier1 + (k - 120) * tier2;
-    return 120 * tier1 + 180 * tier2 + (k - 300) * tier3;
+    if (k <= 120) return k * 35;
+    if (k <= 300) return 120 * 35 + (k - 120) * 41;
+    return 120 * 35 + 180 * 41 + (k - 300) * 45;
   };
 
   const hokkaido = base + calc(kwh);
@@ -57,34 +54,21 @@ export default function Home() {
     { name: "シンエナジー", cost: hokkaido * 0.96 },
     { name: "ミツウロコでんき", cost: hokkaido * 0.98 },
     { name: "イーレックス", cost: hokkaido * 0.97 },
-    { name: "エルピオでんき", cost: hokkaido * 0.97 },
-    { name: "まちエネ", cost: hokkaido * 0.99 },
     { name: "オクトパスエナジー", cost: hokkaido * 0.96 },
-    { name: "コスモでんき", cost: hokkaido * 0.98 },
-    { name: "J:COMでんき", cost: hokkaido * 0.99 },
-    { name: "東京ガス電気", cost: hokkaido * 0.97 },
     { name: "CDエナジー", cost: hokkaido * 0.96 },
-    { name: "idemitsuでんき", cost: hokkaido * 0.98 },
-    { name: "親指でんき", cost: hokkaido * 0.95 },
-    { name: "あしたでんき", cost: hokkaido * 0.97 },
-    { name: "ピタでん", cost: hokkaido * 0.96 },
-    { name: "自然電力", cost: hokkaido * 1.02 },
-    { name: "リミックスでんき", cost: hokkaido * 0.95 },
     { name: "エネワンでんき", cost: hokkaido * 0.97 },
-    { name: "グランデータ", cost: hokkaido * 0.96 },
-    { name: "ハルエネでんき", cost: hokkaido * 0.98 },
-    { name: "新日本エネルギー", cost: hokkaido * 0.97 },
-    { name: "エバーグリーン", cost: hokkaido * 0.96 },
     { name: "Japan電力", cost: hokkaido * 0.95 },
   ];
 
-  const all = [
-    ...companies,
-    { name: "ドコモでんき Basic", cost: docomoBasic },
-    { name: "ドコモでんき Green", cost: docomoGreen },
-  ];
+  const currentCompany = companies.find(c => c.name === current);
 
-  const sorted = [...all].sort((a, b) => a.cost - b.cost);
+  const diffBasic = currentCompany
+    ? currentCompany.cost - docomoBasic
+    : 0;
+
+  const diffGreen = currentCompany
+    ? currentCompany.cost - docomoGreen
+    : 0;
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center p-4">
@@ -99,13 +83,11 @@ export default function Home() {
           value={kwh}
           onChange={(e) => setKwh(Number(e.target.value))}
           className="w-full border p-2 mb-2 rounded"
+          placeholder="使用量 kWh"
         />
 
-        <select
-          value={amp}
-          onChange={(e) => setAmp(Number(e.target.value))}
-          className="w-full border p-2 mb-2 rounded"
-        >
+        <select value={amp} onChange={(e) => setAmp(Number(e.target.value))}
+          className="w-full border p-2 mb-2 rounded">
           <option value={20}>20A</option>
           <option value={30}>30A</option>
           <option value={40}>40A</option>
@@ -113,55 +95,43 @@ export default function Home() {
           <option value={60}>60A</option>
         </select>
 
-        <select
-          value={career}
-          onChange={(e) => setCareer(e.target.value)}
-          className="w-full border p-2 mb-2 rounded"
-        >
+        <select value={career} onChange={(e) => setCareer(e.target.value)}
+          className="w-full border p-2 mb-2 rounded">
           <option value="no">ドコモ回線なし</option>
           <option value="docomo">ドコモ回線あり</option>
         </select>
 
-        <select
-          value={card}
-          onChange={(e) => setCard(e.target.value)}
-          className="w-full border p-2 mb-4 rounded"
-        >
+        <select value={card} onChange={(e) => setCard(e.target.value)}
+          className="w-full border p-2 mb-2 rounded">
           <option value="none">カードなし</option>
           <option value="regular">dカード</option>
           <option value="gold">dカードGOLD</option>
           <option value="platinum">PLATINUM</option>
         </select>
 
-        {/* ドコモ表示 */}
-        <div className="bg-yellow-100 p-3 rounded mb-3 font-bold text-center">
-          ドコモでんき Basic：{docomoBasic.toFixed(0)}円（{basicPoint.toFixed(0)}pt）<br />
-          ドコモでんき Green：{docomoGreen.toFixed(0)}円（{greenPoint.toFixed(0)}pt）
-        </div>
+        {/* 現在の電力会社 */}
+        <select value={current} onChange={(e) => setCurrent(e.target.value)}
+          className="w-full border p-2 mb-4 rounded">
+          {companies.map(c => (
+            <option key={c.name} value={c.name}>{c.name}</option>
+          ))}
+        </select>
 
-        {/* ランキング */}
-        <div className="bg-gray-50 p-3 rounded text-sm max-h-64 overflow-y-scroll">
-          {sorted.map((c, i) => {
-            const isDocomo =
-              c.name === "ドコモでんき Basic" ||
-              c.name === "ドコモでんき Green";
+        {/* 比較結果 */}
+        <div className="bg-yellow-100 p-3 rounded mb-3 text-center font-bold">
+          <p>現在：{currentCompany?.cost.toFixed(0)}円</p>
 
-            return (
-              <div
-                key={i}
-                className={`flex justify-between border-b py-1 px-2
-                  ${i === 0 ? "bg-green-100 font-bold" : ""}
-                  ${isDocomo ? "bg-yellow-200 font-bold text-yellow-900" : ""}
-                `}
-              >
-                <span>
-                  {i + 1}位 {c.name}
-                  {isDocomo && " ←おすすめ"}
-                </span>
-                <span>{c.cost.toFixed(0)}円</span>
-              </div>
-            );
-          })}
+          <p className="mt-2">
+            ドコモ Basic：{docomoBasic.toFixed(0)}円  
+            <br />
+            👉 {diffBasic > 0 ? `${diffBasic.toFixed(0)}円お得` : "ほぼ同じ"}
+          </p>
+
+          <p className="mt-2">
+            ドコモ Green：{docomoGreen.toFixed(0)}円  
+            <br />
+            👉 {diffGreen > 0 ? `${diffGreen.toFixed(0)}円お得` : "ほぼ同じ"}
+          </p>
         </div>
 
       </div>
