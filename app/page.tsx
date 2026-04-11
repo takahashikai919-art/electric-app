@@ -43,10 +43,9 @@ export default function Home() {
   const docomoBasic = hokkaido - basicPoint;
   const docomoGreen = hokkaido + 500 - greenPoint;
 
-  // 🔥 電力会社リスト（北ガス追加）
   const companies = [
     { name: "北海道電力", rate: 1.0 },
-    { name: "北ガス電気", rate: 0.98 }, // ←追加
+    { name: "北ガス電気", rate: 0.98 },
     { name: "Looopでんき", rate: 0.95 },
     { name: "ENEOSでんき", rate: 0.98 },
     { name: "楽天でんき", rate: 1.0 },
@@ -55,31 +54,10 @@ export default function Home() {
     { name: "HTBエナジー", rate: 0.97 },
     { name: "シンエナジー", rate: 0.96 },
     { name: "ミツウロコでんき", rate: 0.98 },
-    { name: "イーレックス", rate: 0.97 },
-    { name: "エルピオでんき", rate: 0.97 },
-    { name: "まちエネ", rate: 0.99 },
     { name: "オクトパスエナジー", rate: 0.96 },
-    { name: "コスモでんき", rate: 0.98 },
-    { name: "J:COMでんき", rate: 0.99 },
-    { name: "東京ガス電気", rate: 0.97 },
     { name: "CDエナジー", rate: 0.96 },
-    { name: "idemitsuでんき", rate: 0.98 },
-    { name: "親指でんき", rate: 0.95 },
-    { name: "あしたでんき", rate: 0.97 },
-    { name: "ピタでん", rate: 0.96 },
-    { name: "自然電力", rate: 1.02 },
-    { name: "リミックスでんき", rate: 0.95 },
     { name: "エネワンでんき", rate: 0.97 },
-    { name: "グランデータ", rate: 0.96 },
-    { name: "ハルエネでんき", rate: 0.98 },
-    { name: "新日本エネルギー", rate: 0.97 },
-    { name: "エバーグリーン", rate: 0.96 },
     { name: "Japan電力", rate: 0.95 },
-    { name: "PinTでんき", rate: 0.97 },
-    { name: "スマ電", rate: 0.96 },
-    { name: "いいねでんき", rate: 0.97 },
-    { name: "しろくま電力", rate: 0.95 },
-    { name: "ONEでんき", rate: 0.96 },
   ];
 
   const companyCosts = companies.map(c => ({
@@ -91,6 +69,9 @@ export default function Home() {
 
   const diffBasic = currentCompany ? currentCompany.cost - docomoBasic : 0;
   const diffGreen = currentCompany ? currentCompany.cost - docomoGreen : 0;
+
+  const yearlyBasic = diffBasic * 12;
+  const yearlyGreen = diffGreen * 12;
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center p-4">
@@ -137,22 +118,31 @@ export default function Home() {
           ))}
         </select>
 
-        {/* 比較 */}
-        <div className="bg-yellow-100 p-3 rounded text-center font-bold">
-          <p>現在：{currentCompany?.cost.toFixed(0)}円</p>
+        {/* クロージングUI */}
+        <div className="bg-red-100 p-4 rounded text-center font-bold mb-3">
+          <p>現在：{currentCompany?.cost.toFixed(0)}円/月</p>
+
+          <p className="mt-2 text-red-600 text-lg">
+            👉 年間最大 {Math.max(yearlyBasic, yearlyGreen).toFixed(0)}円 お得になる可能性があります
+          </p>
 
           <p className="mt-2">
             ドコモBasic：{docomoBasic.toFixed(0)}円  
             <br />
-            👉 {diffBasic > 0 ? `${diffBasic.toFixed(0)}円お得` : "ほぼ同じ"}
+            （年間 {yearlyBasic.toFixed(0)}円差）
           </p>
 
           <p className="mt-2">
             ドコモGreen：{docomoGreen.toFixed(0)}円  
             <br />
-            👉 {diffGreen > 0 ? `${diffGreen.toFixed(0)}円お得` : "ほぼ同じ"}
+            （年間 {yearlyGreen.toFixed(0)}円差）
           </p>
         </div>
+
+        {/* 👇 自然な誘導 */}
+        <p className="text-sm text-center text-gray-600">
+          詳細はお気軽にご相談ください
+        </p>
 
         {/* 注意書き */}
         <p className="text-xs text-gray-500 mt-3 text-center">
