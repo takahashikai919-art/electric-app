@@ -44,31 +44,51 @@ export default function Home() {
   const docomoGreen = hokkaido + 500 - greenPoint;
 
   const companies = [
-    { name: "北海道電力", cost: hokkaido },
-    { name: "Looopでんき", cost: hokkaido * 0.95 },
-    { name: "ENEOSでんき", cost: hokkaido * 0.98 },
-    { name: "楽天でんき", cost: hokkaido },
-    { name: "auでんき", cost: hokkaido * 0.98 },
-    { name: "ソフトバンクでんき", cost: hokkaido * 0.99 },
-    { name: "HTBエナジー", cost: hokkaido * 0.97 },
-    { name: "シンエナジー", cost: hokkaido * 0.96 },
-    { name: "ミツウロコでんき", cost: hokkaido * 0.98 },
-    { name: "イーレックス", cost: hokkaido * 0.97 },
-    { name: "オクトパスエナジー", cost: hokkaido * 0.96 },
-    { name: "CDエナジー", cost: hokkaido * 0.96 },
-    { name: "エネワンでんき", cost: hokkaido * 0.97 },
-    { name: "Japan電力", cost: hokkaido * 0.95 },
+    { name: "北海道電力", rate: 1.0 },
+    { name: "Looopでんき", rate: 0.95 },
+    { name: "ENEOSでんき", rate: 0.98 },
+    { name: "楽天でんき", rate: 1.0 },
+    { name: "auでんき", rate: 0.98 },
+    { name: "ソフトバンクでんき", rate: 0.99 },
+    { name: "HTBエナジー", rate: 0.97 },
+    { name: "シンエナジー", rate: 0.96 },
+    { name: "ミツウロコでんき", rate: 0.98 },
+    { name: "イーレックス", rate: 0.97 },
+    { name: "エルピオでんき", rate: 0.97 },
+    { name: "まちエネ", rate: 0.99 },
+    { name: "オクトパスエナジー", rate: 0.96 },
+    { name: "コスモでんき", rate: 0.98 },
+    { name: "J:COMでんき", rate: 0.99 },
+    { name: "東京ガス電気", rate: 0.97 },
+    { name: "CDエナジー", rate: 0.96 },
+    { name: "idemitsuでんき", rate: 0.98 },
+    { name: "親指でんき", rate: 0.95 },
+    { name: "あしたでんき", rate: 0.97 },
+    { name: "ピタでん", rate: 0.96 },
+    { name: "自然電力", rate: 1.02 },
+    { name: "リミックスでんき", rate: 0.95 },
+    { name: "エネワンでんき", rate: 0.97 },
+    { name: "グランデータ", rate: 0.96 },
+    { name: "ハルエネでんき", rate: 0.98 },
+    { name: "新日本エネルギー", rate: 0.97 },
+    { name: "エバーグリーン", rate: 0.96 },
+    { name: "Japan電力", rate: 0.95 },
+    { name: "PinTでんき", rate: 0.97 },
+    { name: "スマ電", rate: 0.96 },
+    { name: "いいねでんき", rate: 0.97 },
+    { name: "しろくま電力", rate: 0.95 },
+    { name: "ONEでんき", rate: 0.96 },
   ];
 
-  const currentCompany = companies.find(c => c.name === current);
+  const companyCosts = companies.map(c => ({
+    name: c.name,
+    cost: hokkaido * c.rate,
+  }));
 
-  const diffBasic = currentCompany
-    ? currentCompany.cost - docomoBasic
-    : 0;
+  const currentCompany = companyCosts.find(c => c.name === current);
 
-  const diffGreen = currentCompany
-    ? currentCompany.cost - docomoGreen
-    : 0;
+  const diffBasic = currentCompany ? currentCompany.cost - docomoBasic : 0;
+  const diffGreen = currentCompany ? currentCompany.cost - docomoGreen : 0;
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center p-4">
@@ -83,7 +103,6 @@ export default function Home() {
           value={kwh}
           onChange={(e) => setKwh(Number(e.target.value))}
           className="w-full border p-2 mb-2 rounded"
-          placeholder="使用量 kWh"
         />
 
         <select value={amp} onChange={(e) => setAmp(Number(e.target.value))}
@@ -109,7 +128,6 @@ export default function Home() {
           <option value="platinum">PLATINUM</option>
         </select>
 
-        {/* 現在の電力会社 */}
         <select value={current} onChange={(e) => setCurrent(e.target.value)}
           className="w-full border p-2 mb-4 rounded">
           {companies.map(c => (
@@ -117,22 +135,27 @@ export default function Home() {
           ))}
         </select>
 
-        {/* 比較結果 */}
-        <div className="bg-yellow-100 p-3 rounded mb-3 text-center font-bold">
+        {/* 比較 */}
+        <div className="bg-yellow-100 p-3 rounded text-center font-bold">
           <p>現在：{currentCompany?.cost.toFixed(0)}円</p>
 
           <p className="mt-2">
-            ドコモ Basic：{docomoBasic.toFixed(0)}円  
+            ドコモBasic：{docomoBasic.toFixed(0)}円  
             <br />
             👉 {diffBasic > 0 ? `${diffBasic.toFixed(0)}円お得` : "ほぼ同じ"}
           </p>
 
           <p className="mt-2">
-            ドコモ Green：{docomoGreen.toFixed(0)}円  
+            ドコモGreen：{docomoGreen.toFixed(0)}円  
             <br />
             👉 {diffGreen > 0 ? `${diffGreen.toFixed(0)}円お得` : "ほぼ同じ"}
           </p>
         </div>
+
+        {/* ⚠ 注意書き */}
+        <p className="text-xs text-gray-500 mt-3 text-center">
+          ※燃料費調整額・再生可能エネルギー発電促進賦課金は計算に含まれていません
+        </p>
 
       </div>
     </div>
