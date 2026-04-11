@@ -2,13 +2,13 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [kwh, setKwh] = useState(300);
-  const [amp, setAmp] = useState(30);
-  const [career, setCareer] = useState("no");
-  const [card, setCard] = useState("none");
+  const [kwh, setKwh] = useState<number>(300);
+  const [amp, setAmp] = useState<number>(30);
+  const [career, setCareer] = useState<string>("no");
+  const [card, setCard] = useState<string>("none");
 
-  // 基本料金（北海道電力）※ ← 修正済み（any削除）
-  const baseTable = {
+  // 基本料金（型安全に修正）
+  const baseTable: Record<number, number> = {
     20: 759,
     30: 1138,
     40: 1518,
@@ -16,7 +16,7 @@ export default function Home() {
     60: 2277,
   };
 
-  const base = baseTable[amp] || 1138;
+  const base = baseTable[amp] ?? 1138;
 
   // 従量料金
   const tier1 = 35;
@@ -51,7 +51,6 @@ export default function Home() {
   const docomoBasic = hokkaido - basicPoint;
   const docomoGreen = hokkaido + 500 - greenPoint;
 
-  // 他社
   const companies = [
     { name: "北海道電力", cost: hokkaido },
     { name: "Looopでんき", cost: hokkaido * 0.95 },
@@ -95,12 +94,10 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center p-4">
       <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
-
         <h1 className="text-xl font-bold text-center mb-4">
           電気料金比較（北海道）
         </h1>
 
-        {/* 入力 */}
         <input
           type="number"
           value={kwh}
@@ -113,11 +110,11 @@ export default function Home() {
           onChange={(e) => setAmp(Number(e.target.value))}
           className="w-full border p-2 mb-2 rounded"
         >
-          <option value="20">20A</option>
-          <option value="30">30A</option>
-          <option value="40">40A</option>
-          <option value="50">50A</option>
-          <option value="60">60A</option>
+          <option value={20}>20A</option>
+          <option value={30}>30A</option>
+          <option value={40}>40A</option>
+          <option value={50}>50A</option>
+          <option value={60}>60A</option>
         </select>
 
         <select
@@ -140,49 +137,22 @@ export default function Home() {
           <option value="platinum">PLATINUM</option>
         </select>
 
-        {/* ドコモ固定 */}
-        <div className="bg-yellow-50 p-3 rounded mb-3">
-          <h2 className="font-bold text-center mb-2">
-            おすすめ（ドコモでんき）
-          </h2>
-
-          {["ドコモでんき Basic", "ドコモでんき Green"].map((name) => {
-            const target = all.find(c => c.name === name);
-            if (!target) return null;
-
-            const rank =
-              [...all].sort((a, b) => a.cost - b.cost)
-              .findIndex(x => x.name === name) + 1;
-
-            return (
-              <div key={name} className="flex justify-between bg-yellow-200 font-bold p-2 rounded mb-2">
-                <span>
-                  {name}（{rank}位）
-                  {rank === 1 && " ←最安！"}
-                </span>
-                <span>{target.cost.toFixed(0)}円</span>
-              </div>
-            );
-          })}
-
-          <p className="text-xs text-center mt-2">
-            Basic還元：{basicPoint.toFixed(0)}pt / Green還元：{greenPoint.toFixed(0)}pt
-          </p>
+        {/* ドコモ */}
+        <div className="bg-yellow-100 p-3 rounded mb-3 font-bold">
+          ドコモでんき Basic：{docomoBasic.toFixed(0)}円（{basicPoint.toFixed(0)}pt）
+          <br />
+          ドコモでんき Green：{docomoGreen.toFixed(0)}円（{greenPoint.toFixed(0)}pt）
         </div>
 
         {/* ランキング */}
         <div className="bg-gray-50 p-3 rounded text-sm max-h-64 overflow-y-scroll">
           {sorted.map((c, i) => (
-            <div
-              key={i}
-              className={`flex justify-between border-b py-1 px-2 ${i === 0 ? "bg-green-100 font-bold" : ""}`}
-            >
+            <div key={i} className={`flex justify-between ${i === 0 ? "font-bold text-green-600" : ""}`}>
               <span>{i + 1}位 {c.name}</span>
               <span>{c.cost.toFixed(0)}円</span>
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );
