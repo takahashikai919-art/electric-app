@@ -7,7 +7,6 @@ export default function Home() {
   const [career, setCareer] = useState<string>("no");
   const [card, setCard] = useState<string>("none");
 
-  // 基本料金（型安全に修正）
   const baseTable: Record<number, number> = {
     20: 759,
     30: 1138,
@@ -18,7 +17,6 @@ export default function Home() {
 
   const base = baseTable[amp] ?? 1138;
 
-  // 従量料金
   const tier1 = 35;
   const tier2 = 41;
   const tier3 = 45;
@@ -31,7 +29,6 @@ export default function Home() {
 
   const hokkaido = base + calc(kwh);
 
-  // 還元率
   let basicRate = 0.02;
   let greenRate = 0.04;
 
@@ -43,11 +40,9 @@ export default function Home() {
   if (card === "gold") greenRate += 0.01;
   if (card === "platinum") greenRate += 0.05;
 
-  // ポイント
   const basicPoint = hokkaido * basicRate;
   const greenPoint = (hokkaido + 500) * greenRate;
 
-  // 実質料金
   const docomoBasic = hokkaido - basicPoint;
   const docomoGreen = hokkaido + 500 - greenPoint;
 
@@ -94,6 +89,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center p-4">
       <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
+
         <h1 className="text-xl font-bold text-center mb-4">
           電気料金比較（北海道）
         </h1>
@@ -137,22 +133,37 @@ export default function Home() {
           <option value="platinum">PLATINUM</option>
         </select>
 
-        {/* ドコモ */}
-        <div className="bg-yellow-100 p-3 rounded mb-3 font-bold">
-          ドコモでんき Basic：{docomoBasic.toFixed(0)}円（{basicPoint.toFixed(0)}pt）
-          <br />
+        {/* ドコモ表示 */}
+        <div className="bg-yellow-100 p-3 rounded mb-3 font-bold text-center">
+          ドコモでんき Basic：{docomoBasic.toFixed(0)}円（{basicPoint.toFixed(0)}pt）<br />
           ドコモでんき Green：{docomoGreen.toFixed(0)}円（{greenPoint.toFixed(0)}pt）
         </div>
 
         {/* ランキング */}
         <div className="bg-gray-50 p-3 rounded text-sm max-h-64 overflow-y-scroll">
-          {sorted.map((c, i) => (
-            <div key={i} className={`flex justify-between ${i === 0 ? "font-bold text-green-600" : ""}`}>
-              <span>{i + 1}位 {c.name}</span>
-              <span>{c.cost.toFixed(0)}円</span>
-            </div>
-          ))}
+          {sorted.map((c, i) => {
+            const isDocomo =
+              c.name === "ドコモでんき Basic" ||
+              c.name === "ドコモでんき Green";
+
+            return (
+              <div
+                key={i}
+                className={`flex justify-between border-b py-1 px-2
+                  ${i === 0 ? "bg-green-100 font-bold" : ""}
+                  ${isDocomo ? "bg-yellow-200 font-bold text-yellow-900" : ""}
+                `}
+              >
+                <span>
+                  {i + 1}位 {c.name}
+                  {isDocomo && " ←おすすめ"}
+                </span>
+                <span>{c.cost.toFixed(0)}円</span>
+              </div>
+            );
+          })}
         </div>
+
       </div>
     </div>
   );
