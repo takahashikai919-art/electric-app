@@ -43,8 +43,10 @@ export default function Home() {
   const docomoBasic = hokkaido - basicPoint;
   const docomoGreen = hokkaido + 500 - greenPoint;
 
+  // 🔥 電力会社リスト（北ガス追加）
   const companies = [
     { name: "北海道電力", rate: 1.0 },
+    { name: "北ガス電気", rate: 0.98 }, // ←追加
     { name: "Looopでんき", rate: 0.95 },
     { name: "ENEOSでんき", rate: 0.98 },
     { name: "楽天でんき", rate: 1.0 },
@@ -152,7 +154,7 @@ export default function Home() {
           </p>
         </div>
 
-        {/* ⚠ 注意書き */}
+        {/* 注意書き */}
         <p className="text-xs text-gray-500 mt-3 text-center">
           ※燃料費調整額・再生可能エネルギー発電促進賦課金は計算に含まれていません
         </p>
