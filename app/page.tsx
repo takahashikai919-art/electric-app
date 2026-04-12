@@ -46,7 +46,7 @@ export default function Home() {
   const companies = [
     { name: "北海道電力", rate: 1.0 },
     { name: "北ガス電気", rate: 0.98 },
-    { name: "コープでんき", rate: 0.97 }, // ←追加
+    { name: "コープでんき", rate: 0.97 },
     { name: "Looopでんき", rate: 0.95 },
     { name: "ENEOSでんき", rate: 0.98 },
     { name: "楽天でんき", rate: 1.0 },
@@ -143,8 +143,9 @@ export default function Home() {
           詳細はお気軽にご相談ください
         </p>
 
+        {/* 🔥 注意書き（更新済み） */}
         <p className="text-xs text-gray-500 mt-3 text-center">
-          ※燃料費調整額・再生可能エネルギー発電促進賦課金は計算に含まれていません
+          ※燃料費調整額・再生可能エネルギー発電促進賦課金・でんきセット割は計算に含まれていません
         </p>
 
       </div>
