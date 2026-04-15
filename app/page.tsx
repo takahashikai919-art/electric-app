@@ -1,85 +1,60 @@
 "use client";
 import { useState } from "react";
+import { plansData } from "../data/plans";
 
 export default function Home() {
-  const [kwh, setKwh] = useState<number>(300);
-  const [amp, setAmp] = useState<number>(30);
-  const [career, setCareer] = useState<string>("no");
-  const [card, setCard] = useState<string>("none");
-  const [current, setCurrent] = useState<string>("北海道電力");
+  const [kwh, setKwh] = useState(300);
+  const [amp, setAmp] = useState(30);
+  const [company, setCompany] = useState("北海道電力");
 
-  const baseTable: Record<number, number> = {
-    20: 759,
-    30: 1138,
-    40: 1518,
-    50: 1897,
-    60: 2277,
+  const calcPlan = (plan: any) => {
+    if (plan.type === "docomoBasic") {
+      return kwh * 40 * 0.97;
+    }
+
+    if (plan.type === "docomoGreen") {
+      return kwh * 40 + 500 - kwh * 40 * 0.1;
+    }
+
+    if (plan.flat) {
+      return kwh * plan.flat;
+    }
+
+    if (plan.rate) {
+      return kwh * 40 * plan.rate;
+    }
+
+    if (plan.tiers) {
+      let total = plan.base[amp] || 0;
+      let remaining = kwh;
+      let last = 0;
+
+      for (const t of plan.tiers) {
+        const use = Math.min(remaining, t.upTo - last);
+        total += use * t.rate;
+        remaining -= use;
+        last = t.upTo;
+        if (remaining <= 0) break;
+      }
+
+      return total;
+    }
+
+    return 0;
   };
 
-  const base = baseTable[amp] ?? 1138;
-
-  const calc = (k: number) => {
-    if (k <= 120) return k * 35;
-    if (k <= 300) return 120 * 35 + (k - 120) * 41;
-    return 120 * 35 + 180 * 41 + (k - 300) * 45;
-  };
-
-  const hokkaido = base + calc(kwh);
-
-  let basicRate = 0.02;
-  let greenRate = 0.04;
-
-  if (career === "docomo") {
-    basicRate += 0.01;
-    greenRate += 0.01;
-  }
-
-  if (card === "gold") greenRate += 0.01;
-  if (card === "platinum") greenRate += 0.05;
-
-  const basicPoint = hokkaido * basicRate;
-  const greenPoint = (hokkaido + 500) * greenRate;
-
-  const docomoBasic = hokkaido - basicPoint;
-  const docomoGreen = hokkaido + 500 - greenPoint;
-
-  const companies = [
-    { name: "北海道電力", rate: 1.0 },
-    { name: "北ガス電気", rate: 0.98 },
-    { name: "コープでんき", rate: 0.97 },
-    { name: "Looopでんき", rate: 0.95 },
-    { name: "ENEOSでんき", rate: 0.98 },
-    { name: "楽天でんき", rate: 1.0 },
-    { name: "auでんき", rate: 0.98 },
-    { name: "ソフトバンクでんき", rate: 0.99 },
-    { name: "HTBエナジー", rate: 0.97 },
-    { name: "シンエナジー", rate: 0.96 },
-    { name: "ミツウロコでんき", rate: 0.98 },
-    { name: "オクトパスエナジー", rate: 0.96 },
-    { name: "CDエナジー", rate: 0.96 },
-    { name: "エネワンでんき", rate: 0.97 },
-    { name: "Japan電力", rate: 0.95 },
-  ];
-
-  const companyCosts = companies.map(c => ({
-    name: c.name,
-    cost: hokkaido * c.rate,
+  const selected = plansData[company];
+  const results = selected.plans.map((p: any) => ({
+    ...p,
+    cost: calcPlan(p),
   }));
-
-  const currentCompany = companyCosts.find(c => c.name === current);
-
-  const diffBasic = currentCompany ? currentCompany.cost - docomoBasic : 0;
-  const diffGreen = currentCompany ? currentCompany.cost - docomoGreen : 0;
-
-  const yearlyBasic = diffBasic * 12;
-  const yearlyGreen = diffGreen * 12;
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center p-4">
-      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
+      <div className="bg-white p-6 rounded-xl w-full max-w-md shadow">
 
         <h1 className="text-xl font-bold text-center mb-4">
-          電気料金比較（北海道）
+          電気料金比較（完全版）
         </h1>
 
         <input
@@ -89,62 +64,49 @@ export default function Home() {
           className="w-full border p-2 mb-2 rounded"
         />
 
-        <select value={amp} onChange={(e) => setAmp(Number(e.target.value))}
+        <select value={amp} onChange={(e)=>setAmp(Number(e.target.value))}
           className="w-full border p-2 mb-2 rounded">
-          <option value={20}>20A</option>
-          <option value={30}>30A</option>
-          <option value={40}>40A</option>
-          <option value={50}>50A</option>
-          <option value={60}>60A</option>
-        </select>
-
-        <select value={career} onChange={(e) => setCareer(e.target.value)}
-          className="w-full border p-2 mb-2 rounded">
-          <option value="no">ドコモ回線なし</option>
-          <option value="docomo">ドコモ回線あり</option>
-        </select>
-
-        <select value={card} onChange={(e) => setCard(e.target.value)}
-          className="w-full border p-2 mb-2 rounded">
-          <option value="none">カードなし</option>
-          <option value="regular">dカード</option>
-          <option value="gold">dカードGOLD</option>
-          <option value="platinum">PLATINUM</option>
-        </select>
-
-        <select value={current} onChange={(e) => setCurrent(e.target.value)}
-          className="w-full border p-2 mb-4 rounded">
-          {companies.map(c => (
-            <option key={c.name} value={c.name}>{c.name}</option>
+          {[20,30,40,50,60].map(a=>(
+            <option key={a}>{a}A</option>
           ))}
         </select>
 
-        <div className="bg-red-100 p-4 rounded text-center font-bold mb-3">
-          <p>現在：{currentCompany?.cost.toFixed(0)}円/月</p>
+        <select value={company} onChange={(e)=>setCompany(e.target.value)}
+          className="w-full border p-2 mb-4 rounded">
+          {Object.keys(plansData).map(c=>(
+            <option key={c}>{c}</option>
+          ))}
+        </select>
 
-          <p className="mt-2 text-red-600 text-lg">
-            👉 年間最大 {Math.max(yearlyBasic, yearlyGreen).toFixed(0)}円 お得になる可能性があります
-          </p>
+        <div className="space-y-3">
+          {results.map((p:any,i:number)=>(
+            <div key={i} className="bg-gray-50 p-3 rounded border">
 
-          <p className="mt-2">
-            ドコモBasic：{docomoBasic.toFixed(0)}円  
-            <br />
-            （年間 {yearlyBasic.toFixed(0)}円差）
-          </p>
+              <div className="flex justify-between font-bold">
+                <span>{p.name}</span>
+                <span>{p.cost.toFixed(0)}円</span>
+              </div>
 
-          <p className="mt-2">
-            ドコモGreen：{docomoGreen.toFixed(0)}円  
-            <br />
-            （年間 {yearlyGreen.toFixed(0)}円差）
-          </p>
+              <p className="text-xs mt-1">特徴：{p.feature}</p>
+
+              <ul className="text-xs text-green-600">
+                {p.pros?.map((pro:string,idx:number)=>(
+                  <li key={idx}>・{pro}</li>
+                ))}
+              </ul>
+
+              <ul className="text-xs text-red-500">
+                {p.cons?.map((con:string,idx:number)=>(
+                  <li key={idx}>・{con}</li>
+                ))}
+              </ul>
+
+            </div>
+          ))}
         </div>
 
-        <p className="text-sm text-center text-gray-600">
-          詳細はお気軽にご相談ください
-        </p>
-
-        {/* 🔥 注意書き（更新済み） */}
-        <p className="text-xs text-gray-500 mt-3 text-center">
+        {/* 🔥 注意書き */}
+        <p className="text-xs text-gray-500 mt-4 text-center">
           ※燃料費調整額・再生可能エネルギー発電促進賦課金・でんきセット割は計算に含まれていません
         </p>
 
