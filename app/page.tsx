@@ -6,23 +6,12 @@ export default function Home() {
   const [kwh, setKwh] = useState(300);
   const [amp, setAmp] = useState(30);
   const [company, setCompany] = useState("北海道電力");
+  const [career, setCareer] = useState("no");
+  const [card, setCard] = useState("none");
 
   const calcPlan = (plan: any) => {
-    if (plan.type === "docomoBasic") {
-      return kwh * 40 * 0.97;
-    }
-
-    if (plan.type === "docomoGreen") {
-      return kwh * 40 + 500 - kwh * 40 * 0.1;
-    }
-
-    if (plan.flat) {
-      return kwh * plan.flat;
-    }
-
-    if (plan.rate) {
-      return kwh * 40 * plan.rate;
-    }
+    if (plan.flat) return kwh * plan.flat;
+    if (plan.rate) return kwh * 40 * plan.rate;
 
     if (plan.tiers) {
       let total = plan.base[amp] || 0;
@@ -36,25 +25,51 @@ export default function Home() {
         last = t.upTo;
         if (remaining <= 0) break;
       }
-
       return total;
     }
 
     return 0;
   };
 
-  const selected = plansData[company];
-  const results = selected.plans.map((p: any) => ({
-    ...p,
-    cost: calcPlan(p),
-  }));
+  // 現在料金
+  const currentCompany = plansData[company];
+  const currentCost = Math.min(
+    ...currentCompany.plans.map((p: any) => calcPlan(p))
+  );
+
+  // 還元率
+  let basicRate = 0.02;
+  let greenRate = 0.04;
+
+  if (career === "docomo") {
+    basicRate += 0.01;
+    greenRate += 0.01;
+  }
+
+  if (card === "gold") greenRate += 0.01;
+  if (card === "platinum") greenRate += 0.05;
+
+  // ドコモ料金
+  const base = currentCost;
+
+  const basicPoint = base * basicRate;
+  const greenPoint = (base + 500) * greenRate;
+
+  const docomoBasic = base - basicPoint;
+  const docomoGreen = base + 500 - greenPoint;
+
+  const bestDocomo = Math.min(docomoBasic, docomoGreen);
+
+  // 差額
+  const diff = currentCost - bestDocomo;
+  const yearly = diff * 12;
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center p-4">
       <div className="bg-white p-6 rounded-xl w-full max-w-md shadow">
 
         <h1 className="text-xl font-bold text-center mb-4">
-          電気料金比較（完全版）
+          ドコモでんき比較（営業用）
         </h1>
 
         <input
@@ -72,42 +87,59 @@ export default function Home() {
         </select>
 
         <select value={company} onChange={(e)=>setCompany(e.target.value)}
-          className="w-full border p-2 mb-4 rounded">
+          className="w-full border p-2 mb-2 rounded">
           {Object.keys(plansData).map(c=>(
             <option key={c}>{c}</option>
           ))}
         </select>
 
-        <div className="space-y-3">
-          {results.map((p:any,i:number)=>(
-            <div key={i} className="bg-gray-50 p-3 rounded border">
+        <select value={career} onChange={(e)=>setCareer(e.target.value)}
+          className="w-full border p-2 mb-2 rounded">
+          <option value="no">ドコモ回線なし</option>
+          <option value="docomo">ドコモ回線あり</option>
+        </select>
 
-              <div className="flex justify-between font-bold">
-                <span>{p.name}</span>
-                <span>{p.cost.toFixed(0)}円</span>
-              </div>
+        <select value={card} onChange={(e)=>setCard(e.target.value)}
+          className="w-full border p-2 mb-4 rounded">
+          <option value="none">カードなし</option>
+          <option value="regular">dカード</option>
+          <option value="gold">dカードGOLD</option>
+          <option value="platinum">PLATINUM</option>
+        </select>
 
-              <p className="text-xs mt-1">特徴：{p.feature}</p>
+        {/* 結果 */}
+        <div className="bg-yellow-50 p-4 rounded text-center">
 
-              <ul className="text-xs text-green-600">
-                {p.pros?.map((pro:string,idx:number)=>(
-                  <li key={idx}>・{pro}</li>
-                ))}
-              </ul>
+          <p className="text-sm">現在の電気代</p>
+          <p className="text-lg font-bold mb-2">
+            {currentCost.toFixed(0)}円
+          </p>
 
-              <ul className="text-xs text-red-500">
-                {p.cons?.map((con:string,idx:number)=>(
-                  <li key={idx}>・{con}</li>
-                ))}
-              </ul>
+          <p className="text-sm">ドコモでんき（最安）</p>
+          <p className="text-lg font-bold mb-2">
+            {bestDocomo.toFixed(0)}円
+          </p>
 
-            </div>
-          ))}
+          {diff > 0 ? (
+            <>
+              <p className="text-xl font-bold text-red-500">
+                👉 月 {diff.toFixed(0)}円お得！
+              </p>
+              <p className="text-lg font-bold text-green-600">
+                👉 年 {yearly.toFixed(0)}円お得！
+              </p>
+            </>
+          ) : (
+            <p className="text-gray-500">
+              👉 安くならない可能性あり
+            </p>
+          )}
+
         </div>
 
-        {/* 🔥 注意書き */}
+        {/* 注意書き */}
         <p className="text-xs text-gray-500 mt-4 text-center">
-          ※燃料費調整額・再生可能エネルギー発電促進賦課金・でんきセット割は計算に含まれていません
+          ※燃料費調整額・再エネ賦課金・でんきセット割は含まれていません
         </p>
 
       </div>
