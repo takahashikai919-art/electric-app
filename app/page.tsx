@@ -9,17 +9,22 @@ export default function Home() {
   const [company, setCompany] = useState("北海道電力");
   const [plan, setPlan] = useState("従量電灯B");
 
+  // 🔥 北電ベース（＝ドコモ計算用に固定）
+  const calcBaseHokuden = () => {
+    const base = {20:759,30:1138,40:1518,50:1897,60:2277}[amp] || 1138;
+    if (kwh <= 120) return base + kwh * 35;
+    if (kwh <= 300) return base + 120*35 + (kwh-120)*41;
+    return base + 120*35 + 180*41 + (kwh-300)*45;
+  };
+
+  const baseDocomo = calcBaseHokuden();
+
   // 🔥 電力会社データ
   const companies: any = {
     "北海道電力": [
       {
         name: "従量電灯B",
-        calc: () => {
-          const base = {20:759,30:1138,40:1518,50:1897,60:2277}[amp] || 1138;
-          if (kwh <= 120) return base + kwh * 35;
-          if (kwh <= 300) return base + 120*35 + (kwh-120)*41;
-          return base + 120*35 + 180*41 + (kwh-300)*45;
-        },
+        calc: calcBaseHokuden,
         feature: "一般家庭向け",
         pros: ["安定", "安心"],
         cons: ["高くなりやすい"]
@@ -36,27 +41,26 @@ export default function Home() {
       }
     ],
 
-    // 🔥 追加：北ガス ガスセット
     "北ガス電気": [
       {
         name: "従量電灯B",
         calc: () => kwh * 39,
-        feature: "標準プラン",
+        feature: "標準",
         pros: ["シンプル"],
-        cons: ["割引少なめ"]
+        cons: ["差が小さい"]
       },
       {
         name: "ガスセット",
-        calc: () => kwh * 37, // セット割想定
-        feature: "ガスとセットで割引",
-        pros: ["セット割で安い"],
-        cons: ["ガス契約必須"]
+        calc: () => kwh * 37,
+        feature: "ガスセット割",
+        pros: ["セットで安い"],
+        cons: ["ガス契約必要"]
       }
     ],
 
     "コープでんき": [
       {
-        name: "標準プラン",
+        name: "標準",
         calc: () => kwh * 38,
         feature: "安心重視",
         pros: ["信頼性"],
@@ -64,7 +68,6 @@ export default function Home() {
       }
     ],
 
-    // 簡易
     "Looopでんき": [{ name: "標準", calc: () => kwh * 30 }],
     "ENEOSでんき": [{ name: "標準", calc: () => kwh * 39 }],
     "楽天でんき": [{ name: "標準", calc: () => kwh * 40 }],
@@ -85,7 +88,7 @@ export default function Home() {
 
   const currentCost = selectedPlan.calc();
 
-  // 🔥 ドコモ
+  // 🔥 ドコモ（独立計算）
   let basicRate = 0.02;
   let greenRate = 0.04;
 
@@ -96,13 +99,13 @@ export default function Home() {
   if (card === "gold") greenRate += 0.01;
   if (card === "platinum") greenRate += 0.05;
 
-  const basicPoint = currentCost * basicRate;
-  const greenPoint = (currentCost + 500) * greenRate;
+  const basicPoint = baseDocomo * basicRate;
+  const greenPoint = (baseDocomo + 500) * greenRate;
 
-  const docomoBasic = currentCost - basicPoint;
-  const docomoGreen = currentCost + 500 - greenPoint;
+  const docomoBasic = baseDocomo - basicPoint;
+  const docomoGreen = baseDocomo + 500 - greenPoint;
 
-  // 🔥 ランキング用
+  // 🔥 ランキング
   const ranking = Object.keys(companies).map((c) => {
     const cheapest = Math.min(
       ...companies[c].map((p:any) => p.calc())
@@ -110,11 +113,10 @@ export default function Home() {
     return { name: c, cost: cheapest };
   });
 
-  // ドコモも追加
-  ranking.push({ name: "ドコモでんき Basic（ポイント充当後）", cost: docomoBasic });
-  ranking.push({ name: "ドコモでんき Green（ポイント充当後）", cost: docomoGreen });
+  ranking.push({ name: "ドコモBasic（ポイント充当後）", cost: docomoBasic });
+  ranking.push({ name: "ドコモGreen（ポイント充当後）", cost: docomoGreen });
 
-  const sorted = ranking.sort((a, b) => a.cost - b.cost);
+  const sorted = ranking.sort((a,b)=>a.cost-b.cost);
 
   return (
     <div className="p-4 max-w-md mx-auto bg-white rounded shadow">
@@ -177,24 +179,20 @@ export default function Home() {
           Basic → {docomoBasic.toFixed(0)}円（dポイント充当後）  
           <br />
           月{(currentCost - docomoBasic).toFixed(0)}円安い / 年{((currentCost - docomoBasic)*12).toFixed(0)}円
-          <br />
-          ポイント：{basicPoint.toFixed(0)}pt
         </p>
 
         <p className="mt-2">
           Green → {docomoGreen.toFixed(0)}円（dポイント充当後）  
           <br />
           月{(currentCost - docomoGreen).toFixed(0)}円安い / 年{((currentCost - docomoGreen)*12).toFixed(0)}円
-          <br />
-          ポイント：{greenPoint.toFixed(0)}pt
         </p>
 
       </div>
 
-      {/* 🔥 ランキング */}
+      {/* ランキング */}
       <div className="bg-gray-100 p-3 text-sm max-h-60 overflow-y-scroll">
-        {sorted.map((c, i) => (
-          <div key={i} className={`flex justify-between ${i===0 ? "font-bold text-green-600" : ""}`}>
+        {sorted.map((c,i)=>(
+          <div key={i} className={`flex justify-between ${i===0?"text-green-600 font-bold":""}`}>
             <span>{i+1}位 {c.name}</span>
             <span>{c.cost.toFixed(0)}円</span>
           </div>
