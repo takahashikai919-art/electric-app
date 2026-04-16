@@ -1,3 +1,12 @@
+return (
+  <div className="p-4 max-w-md mx-auto bg-white rounded shadow">
+
+    <h1 style={{color:"red"}}>これは最新コードです</h1>
+
+    <h1 className="text-lg font-bold text-center mb-3">
+      ドコモでんき営業ツール（リアル版）
+    </h1>
+
 "use client";
 import { useState } from "react";
 
@@ -141,14 +150,15 @@ export default function Home() {
         className="w-full border p-2 mb-2"/>
 
       <select
-        value={amp}
-        onChange={(e)=>setAmp(Number(e.target.value))}
-        className="w-full border p-2 mb-2"
-      >
-        {[20,30,40,50,60].map(a=>(
-          <option key={a} value={a}>{a}A</option>
-        ))}
-      </select>
+  value={amp}
+  onChange={(e)=>setAmp(Number(e.target.value))}
+>
+  <option value={20}>20A</option>
+  <option value={30}>30A</option>
+  <option value={40}>40A</option>
+</select>
+
+<p>amp: {amp}</p>
 
       <select value={company} onChange={(e)=>{
         setCompany(e.target.value);
