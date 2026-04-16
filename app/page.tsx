@@ -129,10 +129,17 @@ export default function Home() {
         onChange={(e)=>setKwh(Number(e.target.value))}
         className="w-full border p-2 mb-2"/>
 
-      <select value={amp} onChange={(e)=>setAmp(Number(e.target.value))}
-        className="w-full border p-2 mb-2">
-        {[20,30,40,50,60].map(a=><option key={a}>{a}A</option>)}
-      </select>
+      <select
+  value={amp}
+  onChange={(e)=>setAmp(Number(e.target.value))}
+  className="w-full border p-2 mb-2"
+>
+  {[20,30,40,50,60].map(a=>(
+    <option key={a} value={a}>
+      {a}A
+    </option>
+  ))}
+</select>
 
       <select value={company} onChange={(e)=>{
         setCompany(e.target.value);
