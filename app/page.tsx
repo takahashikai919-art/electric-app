@@ -262,10 +262,26 @@ export default function Home() {
 
       {/* 結果 */}
       <div className="bg-yellow-100 p-3 text-center mb-3">
-        <p>現在：{currentCost.toFixed(0)}円/月</p>
-        <p>Basic：{docomoBasic.toFixed(0)}円/月</p>
-        <p>Green：{docomoGreen.toFixed(0)}円/月</p>
-      </div>
+
+  <p>現在：{currentCost.toFixed(0)}円/月</p>
+
+  <p className="mt-2">
+    Basic：{docomoBasic.toFixed(0)}円/月（dポイント充当後）
+    <br />
+    👉 月 {diffBasic.toFixed(0)}円 安い
+    <br />
+    👉 年 {yearlyBasic.toFixed(0)}円 安い
+  </p>
+
+  <p className="mt-2">
+    Green：{docomoGreen.toFixed(0)}円/月（dポイント充当後）
+    <br />
+    👉 月 {diffGreen.toFixed(0)}円 安い
+    <br />
+    👉 年 {yearlyGreen.toFixed(0)}円 安い
+  </p>
+
+</div>
 
       {/* ランキング */}
       <div className="bg-gray-100 p-3 text-sm">
