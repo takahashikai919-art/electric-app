@@ -35,7 +35,6 @@ export default function Home() {
 
   const baseDocomo = hokudenBase();
 
-  // 🔥 companies（トドック完全版に修正）
   const companies:any = {
 
     "北海道電力":[
@@ -59,7 +58,6 @@ export default function Home() {
       {name:"標準",type:"tier",t1:34,t2:40,t3:44}
     ],
 
-    // ✅ トドック電力（完全復元）
     "トドック電力":[
       {name:"ベーシック",type:"tier",t1:34,t2:40,t3:44},
       {name:"再エネ",type:"tier",t1:36,t2:42,t3:46},
@@ -137,142 +135,151 @@ export default function Home() {
   const sorted=ranking.sort((a,b)=>a.cost-b.cost);
 
   return (
-    <div className="p-4 max-w-md mx-auto bg-white rounded shadow">
+    <div className="p-4 max-w-md mx-auto">
 
       <h1 className="text-lg font-bold text-center mb-3">
-        電気料金（営業最強版）
+        電気料金シミュレーター（ベータ版）
       </h1>
 
-      {/* 使用量 */}
-      <div className="mb-2">
-        <label>使用量（kWh）</label>
-        <input
-          type="number"
-          value={kwh}
-          onChange={e=>setKwh(Number(e.target.value))}
-          className="w-full border p-2"
-        />
-      </div>
+      {/* ▼ 条件エリア */}
+      <div className="bg-blue-50 p-3 rounded mb-3">
 
-      {/* アンペア */}
-      <div className="mb-2">
-        <label>契約アンペア</label>
+        {/* 使用量 */}
+        <div className="mb-2">
+          <label>使用量（kWh）</label>
+          <input
+            type="number"
+            value={kwh}
+            onChange={e=>setKwh(Number(e.target.value))}
+            className="w-full border p-2"
+          />
+        </div>
+
+        {/* アンペア */}
+        <div className="mb-2">
+          <label>契約アンペア</label>
+          <select
+            value={amp}
+            onChange={e=>setAmp(Number(e.target.value))}
+            className="w-full border p-2"
+          >
+            {[20,30,40,50,60].map(a=>(
+              <option key={a} value={a}>{a}A</option>
+            ))}
+          </select>
+        </div>
+
+        {/* 昼夜 */}
+        <div className="flex gap-2 mb-2">
+          {[
+            { key: "night", label: "夜多め" },
+            { key: "normal", label: "標準" },
+            { key: "day", label: "昼多め" }
+          ].map(b => (
+            <button
+              key={b.key}
+              onClick={() => setMode(b.key)}
+              className={`px-3 py-1 border rounded ${
+                mode===b.key ? "bg-blue-500 text-white" : "bg-white"
+              }`}
+            >
+              {b.label}
+            </button>
+          ))}
+          <span className="text-xs">※わからない場合は標準</span>
+        </div>
+
+        {/* 季節 */}
+        <div className="flex gap-2 mb-2">
+          {[
+            { key: "winter", label: "冬" },
+            { key: "normal", label: "通常" },
+            { key: "summer", label: "夏" }
+          ].map(b => (
+            <button
+              key={b.key}
+              onClick={() => setSeason(b.key)}
+              className={`px-3 py-1 border rounded ${
+                season===b.key ? "bg-red-500 text-white" : "bg-white"
+              }`}
+            >
+              {b.label}
+            </button>
+          ))}
+          <span className="text-xs">※わからない場合は通常</span>
+        </div>
+
+        {/* ガス */}
+        {company === "北ガス電気" && (
+          <label className="block mb-2">
+            <input
+              type="checkbox"
+              checked={gas}
+              onChange={(e)=>setGas(e.target.checked)}
+            />
+            ガスセット割を適用
+          </label>
+        )}
+
+        {/* 電力会社 */}
         <select
-          value={amp}
-          onChange={e=>setAmp(Number(e.target.value))}
-          className="w-full border p-2"
+          value={company}
+          onChange={e=>{
+            setCompany(e.target.value);
+            setPlan(companies[e.target.value][0].name);
+            setGas(false);
+          }}
+          className="w-full border p-2 mb-2"
         >
-          {[20,30,40,50,60].map(a=>(
-            <option key={a} value={a}>{a}A</option>
+          {Object.keys(companies).map(c=>(
+            <option key={c}>{c}</option>
           ))}
         </select>
-      </div>
 
-      {/* 昼夜 */}
-      <div className="flex gap-2 mb-2">
-        {[
-          { key: "night", label: "夜多め" },
-          { key: "normal", label: "標準" },
-          { key: "day", label: "昼多め" }
-        ].map(b => (
-          <button
-            key={b.key}
-            onClick={() => setMode(b.key)}
-            className={`px-3 py-1 border rounded ${mode===b.key?"bg-blue-500 text-white":""}`}
-          >
-            {b.label}
-          </button>
-        ))}
-        <span className="text-xs">※わからない場合は標準</span>
-      </div>
-
-      {/* 季節 */}
-      <div className="flex gap-2 mb-2">
-        {[
-          { key: "winter", label: "冬" },
-          { key: "normal", label: "通常" },
-          { key: "summer", label: "夏" }
-        ].map(b => (
-          <button
-            key={b.key}
-            onClick={() => setSeason(b.key)}
-            className={`px-3 py-1 border rounded ${season===b.key?"bg-red-500 text-white":""}`}
-          >
-            {b.label}
-          </button>
-        ))}
-        <span className="text-xs">※わからない場合は通常</span>
-      </div>
-
-      {/* ガス */}
-      {company === "北ガス電気" && (
-        <label className="block mb-2">
-          <input
-            type="checkbox"
-            checked={gas}
-            onChange={(e)=>setGas(e.target.checked)}
-          />
-          ガスセット割を適用
-        </label>
-      )}
-
-      {/* 電力会社 */}
-      <select
-        value={company}
-        onChange={e=>{
-          setCompany(e.target.value);
-          setPlan(companies[e.target.value][0].name);
-          setGas(false);
-        }}
-        className="w-full border p-2 mb-2"
-      >
-        {Object.keys(companies).map(c=>(
-          <option key={c}>{c}</option>
-        ))}
-      </select>
-
-      {/* プラン */}
-      <select
-        value={plan}
-        onChange={e=>setPlan(e.target.value)}
-        className="w-full border p-2 mb-3"
-      >
-        {selectedPlans.map((p:any)=>(
-          <option key={p.name}>{p.name}</option>
-        ))}
-      </select>
-
-      {/* トドック特徴 */}
-      {company === "トドック電力" && (
-        <div className="bg-green-100 p-2 text-xs mb-2">
-          363円(税込)につきコープさっぽろポイント1pt付与<br/>
-          宅配トドックのシステム手数料220円/回が無料
-        </div>
-      )}
-
-      {/* ドコモ */}
-      <select value={career} onChange={e=>setCareer(e.target.value)} className="w-full border p-2 mb-2">
-        <option value="no">ドコモ回線なし</option>
-        <option value="docomo">あり</option>
-      </select>
-
-      <select value={card} onChange={e=>setCard(e.target.value)} className="w-full border p-2 mb-2">
-        <option value="none">カードなし</option>
-        <option value="regular">dカード</option>
-        <option value="gold">GOLD</option>
-        <option value="platinum">PLATINUM</option>
-      </select>
-
-      {card==="platinum" && (
-        <select value={platinumUse} onChange={e=>setPlatinumUse(e.target.value)} className="w-full border p-2 mb-2">
-          <option value="low">10万未満</option>
-          <option value="mid">10万以上20万未満</option>
-          <option value="high">20万以上・初年度</option>
+        {/* プラン */}
+        <select
+          value={plan}
+          onChange={e=>setPlan(e.target.value)}
+          className="w-full border p-2 mb-2"
+        >
+          {selectedPlans.map((p:any)=>(
+            <option key={p.name}>{p.name}</option>
+          ))}
         </select>
-      )}
 
-      {/* 結果 */}
-      <div className="bg-yellow-100 p-3 text-center mb-3">
+        {/* トドック特徴 */}
+        {company === "トドック電力" && (
+          <div className="bg-green-100 p-2 text-xs mb-2">
+            363円(税込)につきコープさっぽろポイント1pt付与<br/>
+            宅配トドックのシステム手数料220円/回が無料
+          </div>
+        )}
+
+        {/* ドコモ */}
+        <select value={career} onChange={e=>setCareer(e.target.value)} className="w-full border p-2 mb-2">
+          <option value="no">ドコモ回線なし</option>
+          <option value="docomo">あり</option>
+        </select>
+
+        <select value={card} onChange={e=>setCard(e.target.value)} className="w-full border p-2 mb-2">
+          <option value="none">カードなし</option>
+          <option value="regular">dカード</option>
+          <option value="gold">GOLD</option>
+          <option value="platinum">PLATINUM</option>
+        </select>
+
+        {card==="platinum" && (
+          <select value={platinumUse} onChange={e=>setPlatinumUse(e.target.value)} className="w-full border p-2">
+            <option value="low">10万未満</option>
+            <option value="mid">10万以上20万未満</option>
+            <option value="high">20万以上・初年度</option>
+          </select>
+        )}
+
+      </div>
+
+      {/* ▼ 結果 */}
+      <div className="bg-yellow-100 p-3 text-center mb-3 rounded">
         <p>現在：{currentCost.toFixed(0)}円/月</p>
 
         <p className="mt-2">
@@ -286,10 +293,10 @@ export default function Home() {
         </p>
       </div>
 
-      {/* ランキング */}
-      <div className="bg-gray-100 p-3 text-sm">
+      {/* ▼ ランキング */}
+      <div className="bg-gray-100 p-3 text-sm rounded">
         {sorted.map((c,i)=>(
-          <div key={i} className="flex justify-between">
+          <div key={i} className={`flex justify-between ${i===0?"text-green-600 font-bold":""}`}>
             <span>{i+1}位 {c.name}</span>
             <span>{c.cost.toFixed(0)}円</span>
           </div>
