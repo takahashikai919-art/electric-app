@@ -1,3 +1,7 @@
+<div className="bg-red-500 text-white p-4">
+  Tailwind最終確認
+</div>
+
 "use client";
 import { useState } from "react";
 

@@ -2,13 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ベースUI */
+body {
+  background: #f5f6f8;
+  color: #1a1a1a;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
 /* ライト固定 */
 :root {
   --background: #f5f6f8;
   --foreground: #1a1a1a;
 }
 
-/* ダークモード無効（←これ重要） */
+/* ダークモード無効 */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #f5f6f8;
@@ -50,7 +57,7 @@ body {
   color: #fff;
 }
 
-/* 注意・結果 */
+/* 結果 */
 .result-box {
   background: #fff7cc;
   border-radius: 8px;
