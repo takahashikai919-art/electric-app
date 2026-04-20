@@ -2,22 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 既存のテーマはそのまま下に残す */
-
+/* ライト固定 */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f6f8;
+  --foreground: #1a1a1a;
 }
 
+/* ダークモード無効（←これ重要） */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #f5f6f8;
+    --foreground: #1a1a1a;
   }
 }
 
+/* 全体 */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* カードUI */
+.card {
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* ボタン共通 */
+.btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+/* 選択中（昼夜） */
+.btn-blue-active {
+  background: #3b82f6;
+  color: #fff;
+}
+
+/* 選択中（季節） */
+.btn-red-active {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* 注意・結果 */
+.result-box {
+  background: #fff7cc;
+  border-radius: 8px;
 }
