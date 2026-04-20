@@ -3,10 +3,6 @@ import { useState } from "react";
 
 export default function Home() {
 
-<div className="bg-red-500 text-white p-4">
-  Tailwind最終確認
-</div>
-
   const [kwh, setKwh] = useState(300);
   const [amp, setAmp] = useState(30);
   const [company, setCompany] = useState("北海道電力");
