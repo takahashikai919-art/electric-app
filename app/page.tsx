@@ -39,7 +39,11 @@ export default function Home() {
 
     "北海道電力":[
       {name:"従量電灯B",type:"tier",t1:35,t2:41,t3:45},
-      {name:"エネとくL",type:"tier",t1:33,t2:39,t3:43}
+
+      // ▼ 修正：固定＋超過従量型
+      {name:"エネとくS",type:"fixed",limit:150,base:5064,over:45},
+      {name:"エネとくM",type:"fixed",limit:250,base:9280,over:45},
+      {name:"エネとくL",type:"fixed",limit:400,base:15764,over:44}
     ],
 
     "北ガス電気":[
@@ -86,6 +90,16 @@ export default function Home() {
       const nightKwh = kwh*(nightRatio/100);
       const dayKwh = kwh - nightKwh;
       cost = baseTable[amp] + dayKwh*p.day + nightKwh*p.night;
+    }
+
+    // ▼ 追加ロジック（本質）
+    if(p.type==="fixed"){
+      if(kwh <= p.limit){
+        cost = baseTable[amp] + p.base;
+      }else{
+        const extra = (kwh - p.limit) * p.over;
+        cost = baseTable[amp] + p.base + extra;
+      }
     }
 
     cost *= seasonRate[season];
@@ -144,7 +158,6 @@ export default function Home() {
       {/* ▼ 条件エリア */}
       <div className="bg-blue-50 p-3 rounded mb-3">
 
-        {/* 使用量 */}
         <div className="mb-2">
           <label>使用量（kWh）</label>
           <input
@@ -155,7 +168,6 @@ export default function Home() {
           />
         </div>
 
-        {/* アンペア */}
         <div className="mb-2">
           <label>契約アンペア</label>
           <select
@@ -169,7 +181,6 @@ export default function Home() {
           </select>
         </div>
 
-        {/* 昼夜 */}
         <div className="flex gap-2 mb-2">
           {[
             { key: "night", label: "夜多め" },
@@ -189,7 +200,6 @@ export default function Home() {
           <span className="text-xs">※わからない場合は標準</span>
         </div>
 
-        {/* 季節 */}
         <div className="flex gap-2 mb-2">
           {[
             { key: "winter", label: "冬" },
@@ -209,7 +219,6 @@ export default function Home() {
           <span className="text-xs">※わからない場合は通常</span>
         </div>
 
-        {/* ガス */}
         {company === "北ガス電気" && (
           <label className="block mb-2">
             <input
@@ -221,7 +230,6 @@ export default function Home() {
           </label>
         )}
 
-        {/* 電力会社 */}
         <select
           value={company}
           onChange={e=>{
@@ -236,7 +244,6 @@ export default function Home() {
           ))}
         </select>
 
-        {/* プラン */}
         <select
           value={plan}
           onChange={e=>setPlan(e.target.value)}
@@ -247,7 +254,6 @@ export default function Home() {
           ))}
         </select>
 
-        {/* トドック特徴 */}
         {company === "トドック電力" && (
           <div className="bg-green-100 p-2 text-xs mb-2">
             363円(税込)につきコープさっぽろポイント1pt付与<br/>
@@ -255,7 +261,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* ドコモ */}
         <select value={career} onChange={e=>setCareer(e.target.value)} className="w-full border p-2 mb-2">
           <option value="no">ドコモ回線なし</option>
           <option value="docomo">あり</option>
@@ -278,7 +283,6 @@ export default function Home() {
 
       </div>
 
-      {/* ▼ 結果 */}
       <div className="bg-yellow-100 p-3 text-center mb-3 rounded">
         <p>現在：{currentCost.toFixed(0)}円/月</p>
 
@@ -293,7 +297,6 @@ export default function Home() {
         </p>
       </div>
 
-      {/* ▼ ランキング */}
       <div className="bg-gray-100 p-3 text-sm rounded">
         {sorted.map((c,i)=>(
           <div key={i} className={`flex justify-between ${i===0?"text-green-600 font-bold":""}`}>
