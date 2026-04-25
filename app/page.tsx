@@ -40,7 +40,6 @@ export default function Home() {
     "北海道電力":[
       {name:"従量電灯B",type:"tier",t1:35,t2:41,t3:45},
 
-      // ▼ 修正：固定＋超過従量型
       {name:"エネとくS",type:"fixed",limit:150,base:5064,over:45},
       {name:"エネとくM",type:"fixed",limit:250,base:9280,over:45},
       {name:"エネとくL",type:"fixed",limit:400,base:15764,over:44}
@@ -92,7 +91,6 @@ export default function Home() {
       cost = baseTable[amp] + dayKwh*p.day + nightKwh*p.night;
     }
 
-    // ▼ 追加ロジック（本質）
     if(p.type==="fixed"){
       if(kwh <= p.limit){
         cost = baseTable[amp] + p.base;
@@ -113,7 +111,6 @@ export default function Home() {
 
   const currentCost = calcCost(selectedPlan);
 
-  // ===== ドコモ =====
   let basicRate=0.02;
   let greenRate=0.04;
 
@@ -155,7 +152,6 @@ export default function Home() {
         電気料金シミュレーター（ベータ版）
       </h1>
 
-      {/* ▼ 条件エリア */}
       <div className="bg-blue-50 p-3 rounded mb-3">
 
         <div className="mb-2">
@@ -169,7 +165,7 @@ export default function Home() {
         </div>
 
         <div className="mb-2">
-          <label>契約アンペア</label>
+          <label>契約アンペア（A）</label>
           <select
             value={amp}
             onChange={e=>setAmp(Number(e.target.value))}
@@ -253,6 +249,23 @@ export default function Home() {
             <option key={p.name}>{p.name}</option>
           ))}
         </select>
+
+        {/* ▼ 追加：エネとく説明 */}
+        {company==="北海道電力" && plan==="エネとくS" && (
+          <div className="bg-yellow-50 p-2 text-xs mb-2">
+            150kWhまで定額。超過後1kWhあたり45.44円
+          </div>
+        )}
+        {company==="北海道電力" && plan==="エネとくM" && (
+          <div className="bg-yellow-50 p-2 text-xs mb-2">
+            250kWhまで定額。超過後1kWhあたり45.11円
+          </div>
+        )}
+        {company==="北海道電力" && plan==="エネとくL" && (
+          <div className="bg-yellow-50 p-2 text-xs mb-2">
+            400kWhまで定額。超過後1kWhあたり44.44円
+          </div>
+        )}
 
         {company === "トドック電力" && (
           <div className="bg-green-100 p-2 text-xs mb-2">
