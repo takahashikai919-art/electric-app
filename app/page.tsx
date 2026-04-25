@@ -23,6 +23,10 @@ export default function Home() {
 
   const baseTable:any = { 20:759,30:1138,40:1518,50:1897,60:2277 };
 
+  const enetokuPointBaseTable:any = {
+    20:726,30:1144,40:1562,50:1980,60:2398
+  };
+
   const tier = (k:number,t1:number,t2:number,t3:number)=>{
     if(k<=120) return k*t1;
     if(k<=300) return 120*t1+(k-120)*t2;
@@ -39,8 +43,7 @@ export default function Home() {
 
     "北海道電力":[
       {name:"従量電灯B",type:"tier",t1:35,t2:41,t3:45},
-
-      // 単価を表示と合わせる
+      {name:"エネとくポイントプラン",type:"tier_point",t1:35.69,t2:41.98,t3:45.70},
       {name:"エネとくS",type:"fixed",limit:150,base:5064,over:45.44},
       {name:"エネとくM",type:"fixed",limit:250,base:9280,over:45.11},
       {name:"エネとくL",type:"fixed",limit:400,base:15764,over:44.44}
@@ -82,6 +85,10 @@ export default function Home() {
       cost = baseTable[amp] + tier(kwh,p.t1,p.t2,p.t3);
     }
 
+    if(p.type==="tier_point"){
+      cost = enetokuPointBaseTable[amp] + tier(kwh,p.t1,p.t2,p.t3);
+    }
+
     if(p.type==="flat"){
       cost = baseTable[amp] + kwh*p.flat;
     }
@@ -96,7 +103,6 @@ export default function Home() {
       if(kwh <= p.limit){
         cost = baseTable[amp] + p.base;
       }else{
-        // ▼ 切り上げ処理を追加（核心）
         const extra = Math.ceil((kwh - p.limit) * p.over);
         cost = baseTable[amp] + p.base + extra;
       }
@@ -108,7 +114,7 @@ export default function Home() {
       cost *= 0.95;
     }
 
-    return cost;
+    return Math.ceil(cost);
   };
 
   const currentCost = calcCost(selectedPlan);
@@ -128,11 +134,11 @@ export default function Home() {
     if(platinumUse==="high") greenRate+=0.05;
   }
 
-  const basicPoint=baseDocomo*basicRate;
-  const greenPoint=(baseDocomo+500)*greenRate;
+  const basicPoint=Math.ceil(baseDocomo*basicRate);
+  const greenPoint=Math.ceil((baseDocomo+500)*greenRate);
 
-  const docomoBasic=baseDocomo-basicPoint;
-  const docomoGreen=baseDocomo+500-greenPoint;
+  const docomoBasic=Math.ceil(baseDocomo-basicPoint);
+  const docomoGreen=Math.ceil(baseDocomo+500-greenPoint);
 
   const diffBasic = currentCost - docomoBasic;
   const diffGreen = currentCost - docomoGreen;
@@ -158,21 +164,16 @@ export default function Home() {
 
         <div className="mb-2">
           <label>使用量（kWh）</label>
-          <input
-            type="number"
-            value={kwh}
+          <input type="number" value={kwh}
             onChange={e=>setKwh(Number(e.target.value))}
-            className="w-full border p-2"
-          />
+            className="w-full border p-2"/>
         </div>
 
         <div className="mb-2">
           <label>契約アンペア（A）</label>
-          <select
-            value={amp}
+          <select value={amp}
             onChange={e=>setAmp(Number(e.target.value))}
-            className="w-full border p-2"
-          >
+            className="w-full border p-2">
             {[20,30,40,50,60].map(a=>(
               <option key={a} value={a}>{a}A</option>
             ))}
@@ -180,18 +181,9 @@ export default function Home() {
         </div>
 
         <div className="flex gap-2 mb-2">
-          {[
-            { key: "night", label: "夜多め" },
-            { key: "normal", label: "標準" },
-            { key: "day", label: "昼多め" }
-          ].map(b => (
-            <button
-              key={b.key}
-              onClick={() => setMode(b.key)}
-              className={`px-3 py-1 border rounded ${
-                mode===b.key ? "bg-blue-500 text-white" : "bg-white"
-              }`}
-            >
+          {[{ key:"night",label:"夜多め"},{ key:"normal",label:"標準"},{ key:"day",label:"昼多め"}].map(b=>(
+            <button key={b.key} onClick={()=>setMode(b.key)}
+              className={`px-3 py-1 border rounded ${mode===b.key?"bg-blue-500 text-white":"bg-white"}`}>
               {b.label}
             </button>
           ))}
@@ -199,18 +191,9 @@ export default function Home() {
         </div>
 
         <div className="flex gap-2 mb-2">
-          {[
-            { key: "winter", label: "冬" },
-            { key: "normal", label: "通常" },
-            { key: "summer", label: "夏" }
-          ].map(b => (
-            <button
-              key={b.key}
-              onClick={() => setSeason(b.key)}
-              className={`px-3 py-1 border rounded ${
-                season===b.key ? "bg-red-500 text-white" : "bg-white"
-              }`}
-            >
+          {[{ key:"winter",label:"冬"},{ key:"normal",label:"通常"},{ key:"summer",label:"夏"}].map(b=>(
+            <button key={b.key} onClick={()=>setSeason(b.key)}
+              className={`px-3 py-1 border rounded ${season===b.key?"bg-red-500 text-white":"bg-white"}`}>
               {b.label}
             </button>
           ))}
@@ -219,38 +202,39 @@ export default function Home() {
 
         {company === "北ガス電気" && (
           <label className="block mb-2">
-            <input
-              type="checkbox"
-              checked={gas}
-              onChange={(e)=>setGas(e.target.checked)}
-            />
+            <input type="checkbox" checked={gas}
+              onChange={(e)=>setGas(e.target.checked)}/>
             ガスセット割を適用
           </label>
         )}
 
-        <select
-          value={company}
+        <select value={company}
           onChange={e=>{
             setCompany(e.target.value);
             setPlan(companies[e.target.value][0].name);
             setGas(false);
           }}
-          className="w-full border p-2 mb-2"
-        >
+          className="w-full border p-2 mb-2">
           {Object.keys(companies).map(c=>(
             <option key={c}>{c}</option>
           ))}
         </select>
 
-        <select
-          value={plan}
+        <select value={plan}
           onChange={e=>setPlan(e.target.value)}
-          className="w-full border p-2 mb-2"
-        >
+          className="w-full border p-2 mb-2">
           {selectedPlans.map((p:any)=>(
             <option key={p.name}>{p.name}</option>
           ))}
         </select>
+
+        {/* ★ここに追加（トドックと同じ位置） */}
+        {company==="北海道電力" && plan==="エネとくポイントプラン" && (
+          <div className="bg-yellow-50 p-2 text-xs mb-2">
+            従量電灯Bより基本料金が110円安い<br/>
+            電気料金200円につき1ポイント付与
+          </div>
+        )}
 
         {company==="北海道電力" && plan==="エネとくS" && (
           <div className="bg-yellow-50 p-2 text-xs mb-2">
