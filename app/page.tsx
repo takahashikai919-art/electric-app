@@ -40,9 +40,10 @@ export default function Home() {
     "北海道電力":[
       {name:"従量電灯B",type:"tier",t1:35,t2:41,t3:45},
 
-      {name:"エネとくS",type:"fixed",limit:150,base:5064,over:45},
-      {name:"エネとくM",type:"fixed",limit:250,base:9280,over:45},
-      {name:"エネとくL",type:"fixed",limit:400,base:15764,over:44}
+      // 単価を表示と合わせる
+      {name:"エネとくS",type:"fixed",limit:150,base:5064,over:45.44},
+      {name:"エネとくM",type:"fixed",limit:250,base:9280,over:45.11},
+      {name:"エネとくL",type:"fixed",limit:400,base:15764,over:44.44}
     ],
 
     "北ガス電気":[
@@ -95,7 +96,8 @@ export default function Home() {
       if(kwh <= p.limit){
         cost = baseTable[amp] + p.base;
       }else{
-        const extra = (kwh - p.limit) * p.over;
+        // ▼ 切り上げ処理を追加（核心）
+        const extra = Math.ceil((kwh - p.limit) * p.over);
         cost = baseTable[amp] + p.base + extra;
       }
     }
@@ -250,7 +252,6 @@ export default function Home() {
           ))}
         </select>
 
-        {/* ▼ 追加：エネとく説明 */}
         {company==="北海道電力" && plan==="エネとくS" && (
           <div className="bg-yellow-50 p-2 text-xs mb-2">
             150kWhまで定額。超過後1kWhあたり45.44円
