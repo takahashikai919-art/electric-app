@@ -12,12 +12,18 @@ export default function Home() {
   const [season, setSeason] = useState("normal");
   const [gas, setGas] = useState(false);
 
+  // ★追加
+  const [aircon, setAircon] = useState(false);
+
   const [career, setCareer] = useState("no");
   const [card, setCard] = useState("none");
   const [platinumUse, setPlatinumUse] = useState("low");
 
   const nightMap:any = { night:70, normal:50, day:30 };
   const nightRatio = nightMap[mode];
+
+  // ★追加（季節定義用）
+  const seasonType = season==="winter" ? "winter" : "other";
 
   const seasonRate:any = { normal:1, winter:1.1, summer:0.95 };
 
@@ -44,6 +50,17 @@ export default function Home() {
     "北海道電力":[
       {name:"従量電灯B",type:"tier",t1:35,t2:41,t3:45},
       {name:"エネとくポイントプラン",type:"tier_point",t1:35.69,t2:41.98,t3:45.70},
+
+      // ★追加
+      {
+        name:"エネとくシーズンプラス",
+        type:"season_plus",
+        base:{30:1287,40:1716,50:2145,60:2574},
+        winter:{limit:200,base:7651,over:46.88},
+        other:{limit:200,base:6881,over:41.38},
+        aircon:330
+      },
+
       {name:"エネとくS",type:"fixed",limit:150,base:5064,over:45.44},
       {name:"エネとくM",type:"fixed",limit:250,base:9280,over:45.11},
       {name:"エネとくL",type:"fixed",limit:400,base:15764,over:44.44}
@@ -108,6 +125,21 @@ export default function Home() {
       }
     }
 
+    // ★追加
+    if(p.type==="season_plus"){
+      const seasonData = seasonType==="winter" ? p.winter : p.other;
+
+      let energy = kwh <= seasonData.limit
+        ? seasonData.base
+        : seasonData.base + Math.ceil((kwh - seasonData.limit) * seasonData.over);
+
+      cost = (p.base[amp] || 0) + energy;
+
+      if(aircon){
+        cost -= p.aircon;
+      }
+    }
+
     cost *= seasonRate[season];
 
     if(company === "北ガス電気" && gas){
@@ -162,6 +194,8 @@ export default function Home() {
 
       <div className="bg-blue-50 p-3 rounded mb-3">
 
+        {/* ===== 元UI完全維持ここから ===== */}
+
         <div className="mb-2">
           <label>使用量（kWh）</label>
           <input type="number" value={kwh}
@@ -200,6 +234,15 @@ export default function Home() {
           <span className="text-xs">※わからない場合は通常</span>
         </div>
 
+        {/* ★追加：エアコン割引 */}
+        {company==="北海道電力" && plan==="エネとくシーズンプラス" && (
+          <label className="block mb-2">
+            <input type="checkbox" checked={aircon}
+              onChange={(e)=>setAircon(e.target.checked)}/>
+            エアコン割引（-330円）
+          </label>
+        )}
+
         {company === "北ガス電気" && (
           <label className="block mb-2">
             <input type="checkbox" checked={gas}
@@ -213,6 +256,7 @@ export default function Home() {
             setCompany(e.target.value);
             setPlan(companies[e.target.value][0].name);
             setGas(false);
+            setAircon(false);
           }}
           className="w-full border p-2 mb-2">
           {Object.keys(companies).map(c=>(
@@ -228,7 +272,15 @@ export default function Home() {
           ))}
         </select>
 
-        {/* ★ここに追加（トドックと同じ位置） */}
+        {/* ★追加：説明 */}
+        {company==="北海道電力" && plan==="エネとくシーズンプラス" && (
+          <div className="bg-yellow-50 p-2 text-xs mb-2">
+            主に夏季の冷房用・除湿用向け料金プラン。<br/>
+            冬期間（11月～翌2月末）以外の電力量料金が割安。
+          </div>
+        )}
+
+        {/* 既存説明群そのまま */}
         {company==="北海道電力" && plan==="エネとくポイントプラン" && (
           <div className="bg-yellow-50 p-2 text-xs mb-2">
             従量電灯Bより基本料金が110円安い<br/>
@@ -278,6 +330,8 @@ export default function Home() {
             <option value="high">20万以上・初年度</option>
           </select>
         )}
+
+        {/* ===== 元UI完全維持ここまで ===== */}
 
       </div>
 
