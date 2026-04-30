@@ -6,7 +6,75 @@ type DiscountKey =
   | 'hotWaterHeat'
   | 'myHomeGen'
   | 'kerosene';
+// ▼▼▼ ここに追加 ▼▼▼
+type PlanType =
+  | 'tier'
+  | 'tier_point'
+  | 'flat'
+  | 'time'
+  | 'fixed'
+  | 'season_plus'
+  | 'kitagas'
+  | 'kitagas_plus';
 
+  type Plan =
+  | {
+      type: 'tier';
+      name: string;
+      t1: number;
+      t2: number;
+      t3: number;
+    }
+  | {
+      type: 'tier_point';
+      name: string;
+      t1: number;
+      t2: number;
+      t3: number;
+    }
+  | {
+      type: 'flat';
+      name: string;
+      flat: number;
+    }
+  | {
+      type: 'time';
+      name: string;
+      day: number;
+      night: number;
+    }
+  | {
+      type: 'fixed';
+      name: string;
+      limit: number;
+      base: number;
+      over: number;
+    }
+  | {
+      type: 'season_plus';
+      name: string;
+      base: Record<number, number>;
+      winter: {
+        limit: number;
+        base: number;
+        over: number;
+      };
+      other: {
+        limit: number;
+        base: number;
+        over: number;
+      };
+      aircon: number;
+    }
+  | {
+      type: 'kitagas';
+      name: string;
+    }
+  | {
+      type: 'kitagas_plus';
+      name: string;
+    };
+// ▲▲▲ ここまで追加 ▲▲▲ 
 export default function Home() {
   const [kwh, setKwh] = useState(300);
   const [amp, setAmp] = useState(30);
@@ -21,7 +89,7 @@ export default function Home() {
   const [career, setCareer] = useState('no');
   const [card, setCard] = useState('none');
   const [platinumUse, setPlatinumUse] = useState('low');
-  /* ===== ここから追加 ===== */
+
   const [discounts, setDiscounts] = useState<Record<DiscountKey, boolean>>({
   hotWaterSnow: false,
   hotWaterHeat: false,
@@ -35,7 +103,6 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
   myHomeGen: false,
   kerosene: false,
 });
-  /* ===== ここまで追加 ===== */
 
   const nightMap: any = { night: 70, normal: 50, day: 30 };
   const nightRatio = nightMap[mode];
@@ -75,7 +142,6 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
     return Math.ceil(120 * 34.62 + 160 * 40.72 + (k - 280) * 44.33);
   };
 
-  // ★追加
   const kitagasPlusTier = (k: number) => {
     if (k <= 120) return Math.ceil(k * 34.27);
     if (k <= 280) return Math.ceil(120 * 34.27 + (k - 120) * 40.31);
@@ -88,7 +154,7 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
 
   const baseDocomo = hokudenBase();
 
-  const companies: any = {
+  const companies: Record<string, Plan[]> = {
     北海道電力: [
       { name: '従量電灯B', type: 'tier', t1: 35, t2: 41, t3: 45 },
       {
@@ -139,113 +205,191 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
   };
 
   const selectedPlans = companies[company];
-  const selectedPlan = selectedPlans.find((p: any) => p.name === plan) ||
-    selectedPlans[0] || { type: 'tier', t1: 0, t2: 0, t3: 0 };
-  /* ===== ここから追加 ===== */
+
+  const selectedPlan: Plan =
+  selectedPlans.find((p: Plan) => p.name === plan) ||
+  selectedPlans[0];
+  
   const isKitagasTarget =
     company === '北ガス電気' &&
     (plan === '従量電灯Bプラス' || plan === '従量電灯Bメイト');
-  /* ===== ここまで追加 ===== */
-  const calcCost = (p: any) => {
-    let cost = 0;
 
-    if (p.type === 'tier') {
-      cost = baseTable[amp] + tier(kwh, p.t1, p.t2, p.t3);
-    }
-
-    if (p.type === 'tier_point') {
-      cost = enetokuPointBaseTable[amp] + tier(kwh, p.t1, p.t2, p.t3);
-    }
-
-    if (p.type === 'flat') {
-      cost = baseTable[amp] + kwh * p.flat;
-    }
-
-    if (p.type === 'time') {
-      const nightKwh = kwh * (nightRatio / 100);
-      const dayKwh = kwh - nightKwh;
-      cost = baseTable[amp] + dayKwh * p.day + nightKwh * p.night;
-    }
-
-    if (p.type === 'fixed') {
-      if (kwh <= p.limit) {
-        cost = baseTable[amp] + p.base;
-      } else {
-        const extra = Math.ceil((kwh - p.limit) * p.over);
-        cost = baseTable[amp] + p.base + extra;
-      }
-    }
-
-    if (p.type === 'season_plus') {
-      const seasonData = seasonType === 'winter' ? p.winter : p.other;
-
-      let energy =
-        kwh <= seasonData.limit
-          ? seasonData.base
-          : seasonData.base +
-            Math.ceil((kwh - seasonData.limit) * seasonData.over);
-
-      cost = (p.base[amp] || 0) + energy;
-
-      if (aircon) {
-        cost -= p.aircon;
-      }
-    }
-
-    if (p.type === 'kitagas') {
-      cost = (kitagasBase[amp] || 0) + kitagasTier(kwh);
-    }
-
-    if (p.type === 'kitagas_plus') {
-      // ★追加
-      cost = (kitagasBase[amp] || 0) + kitagasPlusTier(kwh);
-      /* ===== ここから追加 ===== */
-      let discountRate = 0;
-
-      if (discounts.hotWaterSnow) discountRate += 0.01;
-      if (discounts.hotWaterHeat) discountRate += 0.02;
-      if (discounts.myHomeGen) discountRate += 0.03;
-      if (discounts.kerosene) discountRate += 0.02;
-
-      cost = cost * (1 - discountRate);
-      /* ===== ここまで追加 ===== */
-    }
-
-    cost *= seasonRate[season];
-
-    return Math.ceil(cost);
+  /* ===== 追加：context ===== */
+  type Context = {
+    kwh: number;
+    amp: number;
+    season: string;
+    seasonRate: Record<string, number>;
+    nightRatio: number;
+    discounts: Record<DiscountKey, boolean>;
+    aircon: boolean;
+  };
+  
+  const context: Context = {
+    kwh,
+    amp,
+    season,
+    seasonRate,
+    nightRatio,
+    discounts,
+    aircon,
   };
 
-  const currentCost = calcCost(selectedPlan);
+/* ===== ここが重要：calculators完全版 ===== */
+const calculators: {
+  [K in Plan['type']]: (
+    p: Extract<Plan, { type: K }>,
+    ctx: Context
+  ) => number;
+} = {
+  tier: (p: any, ctx: any) => {
+    return baseTable[ctx.amp] + tier(ctx.kwh, p.t1, p.t2, p.t3);
+  },
 
-  let basicRate = 0.02;
-  let greenRate = 0.04;
+  tier_point: (p: any, ctx: any) => {
+    return (
+      enetokuPointBaseTable[ctx.amp] +
+      tier(ctx.kwh, p.t1, p.t2, p.t3)
+    );
+  },
 
-  if (career === 'docomo') {
-    basicRate += 0.01;
-    greenRate += 0.01;
+  flat: (p: any, ctx: any) => {
+    return baseTable[ctx.amp] + ctx.kwh * p.flat;
+  },
+
+  time: (p: any, ctx: any) => {
+    const night = ctx.kwh * (ctx.nightRatio / 100);
+    const day = ctx.kwh - night;
+    return baseTable[ctx.amp] + day * p.day + night * p.night;
+  },
+
+  fixed: (p: any, ctx: any) => {
+    if (ctx.kwh <= p.limit) {
+      return baseTable[ctx.amp] + p.base;
+    } else {
+      const extra = Math.ceil((ctx.kwh - p.limit) * p.over);
+      return baseTable[ctx.amp] + p.base + extra;
+    }
+  },
+
+  season_plus: (p: any, ctx: any) => {
+    const seasonData =
+      ctx.season === 'winter' ? p.winter : p.other;
+
+    let energy =
+      ctx.kwh <= seasonData.limit
+        ? seasonData.base
+        : seasonData.base +
+          Math.ceil(
+            (ctx.kwh - seasonData.limit) * seasonData.over
+          );
+
+    let cost = ((p.base as any)[ctx.amp] || 0) + energy;
+
+    if (ctx.aircon) {
+      cost -= p.aircon!;
+    }
+
+    return cost;
+  },
+
+  kitagas: (p: any, ctx: any) => {
+    return (kitagasBase[ctx.amp] || 0) + kitagasTier(ctx.kwh);
+  },
+
+  kitagas_plus: (p: any, ctx: any) => {
+    let cost =
+      (kitagasBase[ctx.amp] || 0) + kitagasPlusTier(ctx.kwh);
+
+    let discount = 0;
+    if (ctx.discounts.hotWaterSnow) discount += 0.01;
+    if (ctx.discounts.hotWaterHeat) discount += 0.02;
+    if (ctx.discounts.myHomeGen) discount += 0.03;
+    if (ctx.discounts.kerosene) discount += 0.02;
+
+    return cost * (1 - discount);
+  },
+};
+
+/* ===== calcCost ===== */
+const calcCost = (p: Plan) => {
+  switch (p.type) {
+    case 'tier':
+      return Math.ceil(
+        calculators.tier(p, context) * seasonRate[season]
+      );
+
+    case 'tier_point':
+      return Math.ceil(
+        calculators.tier_point(p, context) * seasonRate[season]
+      );
+
+    case 'flat':
+      return Math.ceil(
+        calculators.flat(p, context) * seasonRate[season]
+      );
+
+    case 'time':
+      return Math.ceil(
+        calculators.time(p, context) * seasonRate[season]
+      );
+
+    case 'fixed':
+      return Math.ceil(
+        calculators.fixed(p, context) * seasonRate[season]
+      );
+
+    case 'season_plus':
+      return Math.ceil(
+        calculators.season_plus(p, context) * seasonRate[season]
+      );
+
+    case 'kitagas':
+      return Math.ceil(
+        calculators.kitagas(p, context) * seasonRate[season]
+      );
+
+    case 'kitagas_plus':
+      return Math.ceil(
+        calculators.kitagas_plus(p, context) * seasonRate[season]
+      );
   }
+};
 
-  if (card === 'gold') greenRate += 0.01;
+/* ===== 既存ロジック ===== */
+const currentCost = calcCost(selectedPlan);
 
-  if (card === 'platinum') {
-    if (platinumUse === 'mid') greenRate += 0.03;
-    if (platinumUse === 'high') greenRate += 0.05;
-  }
+let basicRate = 0.02;
+let greenRate = 0.04;
 
-  const basicPoint = Math.ceil(baseDocomo * basicRate);
-  const greenPoint = Math.ceil((baseDocomo + 500) * greenRate);
+if (career === 'docomo') {
+  basicRate += 0.01;
+  greenRate += 0.01;
+}
 
-  const docomoBasic = Math.ceil(baseDocomo - basicPoint);
-  const docomoGreen = Math.ceil(baseDocomo + 500 - greenPoint);
+if (card === 'gold') greenRate += 0.01;
 
-  const diffBasic = currentCost - docomoBasic;
-  const diffGreen = currentCost - docomoGreen;
+if (card === 'platinum') {
+  if (platinumUse === 'mid') greenRate += 0.03;
+  if (platinumUse === 'high') greenRate += 0.05;
+}
 
-  const ranking = Object.keys(companies).map((c) => {
-    const cheapest = Math.min(...companies[c].map((p: any) => calcCost(p)));
-    return { name: c, cost: cheapest };
-  });
+const basicPoint = Math.ceil(baseDocomo * basicRate);
+const greenPoint = Math.ceil((baseDocomo + 500) * greenRate);
+
+const docomoBasic = Math.ceil(baseDocomo - basicPoint);
+const docomoGreen = Math.ceil(baseDocomo + 500 - greenPoint);
+
+const diffBasic = currentCost - docomoBasic;
+const diffGreen = currentCost - docomoGreen;
+
+/* ===== ranking ===== */
+const ranking = Object.keys(companies).map((c) => {
+  const cheapest = Math.min(
+    ...companies[c].map((p: any) => calcCost(p))
+  );
+  return { name: c, cost: cheapest };
+});
 
   ranking.push({ name: 'ドコモBasic', cost: docomoBasic });
   ranking.push({ name: 'ドコモGreen', cost: docomoGreen });
@@ -294,8 +438,7 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
       </h1>
 
       <div className="bg-blue-50 p-3 rounded mb-3">
-        {/* ===== 元UI完全維持 ===== */}
-
+      
         <div className="mb-2">
           <label>使用量（kWh）</label>
           <input
@@ -376,7 +519,6 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
             setCompany(e.target.value);
             setPlan(companies[e.target.value][0].name);
             setAircon(false);
-            /* ===== ここから追加 ===== */
             setDiscounts({
               hotWaterSnow: false,
               hotWaterHeat: false,
@@ -389,7 +531,7 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
               myHomeGen: false,
               kerosene: false,
             });
-            /* ===== ここまで追加 ===== */
+            
           }}
           className="w-full border p-2 mb-2"
         >
@@ -408,8 +550,6 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
           ))}
         </select>
 
-        {/* ===== 説明UI（ここにのみ追加） ===== */}
-
         {company === '北ガス電気' && plan === '従量電灯Bプラス' && (
           <div className="bg-yellow-50 p-2 text-xs mb-2">
             北ガスとセットのプラン
@@ -422,7 +562,7 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
             ※旭川ガス、岩見沢ガス、帯広ガス、釧路ガス、滝川ガス、苫小牧ガス、美唄ガス、室蘭ガス
           </div>
         )}
-        {/* ===== ここから追加 ===== */}
+        
         {isKitagasTarget && (
   <div className="bg-orange-50 p-2 text-xs mb-2 rounded">
     <p className="font-bold mb-1">ガスセット割引</p>
@@ -464,10 +604,7 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
     ))}
   </div>
 )}
-        {/* ===== ここまで追加 ===== */}
-
-        {/* 以下既存説明UIそのまま */}
-
+       
         {company === '北海道電力' && plan === 'エネとくシーズンプラス' && (
           <div className="bg-yellow-50 p-2 text-xs mb-2">
             主に夏季の冷房用・除湿用向け料金プラン。
