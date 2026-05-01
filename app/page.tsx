@@ -800,7 +800,7 @@ const ranking = Object.keys(companies).map((c) => {
         </p>
       </div>
       <p className="text-xs text-gray-500 text-center mt-2">
-  　　　※燃料調整費、再エネ賦課金、ドコモでんきセット割は計算に含まれていません。
+※燃料調整費、再エネ賦課金、ドコモでんきセット割は計算に含まれていません。
     　</p>
 　　　　</div>
   );
