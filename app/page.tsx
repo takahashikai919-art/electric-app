@@ -121,7 +121,7 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
   const seasonType = season === 'winter' ? 'winter' : 'other';
   const seasonRate: any = { normal: 1, winter: 1.1, summer: 0.95 };
 
-  const baseTable: any = { 20: 759, 30: 1138, 40: 1518, 50: 1897, 60: 2277 };
+  const baseTable: any = { 20: 836, 30: 1254, 40: 1672, 50: 2090, 60: 2508 };
 
   const kitagasBase: any = {
     10: 418,
@@ -160,14 +160,17 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
   };
 
   const hokudenBase = () => {
-    return (baseTable[amp] + tier(kwh, 35, 41, 45)) * seasonRate[season];
+    return (
+      baseTable[amp] +
+      tier(kwh, 35.69, 41.98, 45.7)
+    ) * seasonRate[season];
   };
 
   const baseDocomo = hokudenBase();
 
   const companies: Record<string, Plan[]> = {
     北海道電力: [
-      { name: '従量電灯B', type: 'tier', t1: 35, t2: 41, t3: 45 },
+      { name: '従量電灯B', type: 'tier', t1: 35.69, t2: 41.98, t3: 45.7 },
       {
         name: 'エネとくポイントプラン',
         type: 'tier_point',
@@ -419,7 +422,6 @@ const docomoGreen = Math.ceil(baseDocomo + 500 - greenPoint);
 const diffBasic = currentCost - docomoBasic;
 const diffGreen = currentCost - docomoGreen;
 
-/* ===== ranking ===== */
 const ranking = Object.keys(companies).map((c) => {
   const cheapest = Math.min(
     ...companies[c].map((p: any) => calcCost(p))
