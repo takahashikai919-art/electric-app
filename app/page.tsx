@@ -6,7 +6,7 @@ type DiscountKey =
   | 'hotWaterHeat'
   | 'myHomeGen'
   | 'kerosene';
-// ▼▼▼ ここに追加 ▼▼▼
+
 type PlanType =
   | 'tier'
   | 'tier_point'
@@ -15,7 +15,8 @@ type PlanType =
   | 'fixed'
   | 'season_plus'
   | 'kitagas'
-  | 'kitagas_plus';
+  | 'kitagas_plus'
+  | 'todock';
 
   type Plan =
   | {
@@ -73,8 +74,12 @@ type PlanType =
   | {
       type: 'kitagas_plus';
       name: string;
+    }
+    | {
+      type: 'todock';
+      name: string;
     };
-// ▲▲▲ ここまで追加 ▲▲▲ 
+ 
 export default function Home() {
   const [kwh, setKwh] = useState(300);
   const [amp, setAmp] = useState(30);
@@ -89,6 +94,12 @@ export default function Home() {
   const [career, setCareer] = useState('no');
   const [card, setCard] = useState('none');
   const [platinumUse, setPlatinumUse] = useState('low');
+
+const [todockMenu, setTodockMenu] = useState<'basic' | 'renewable'>('basic');
+const [todockSub, setTodockSub] = useState<'standard' | 'kerosene' | 'triple'>('standard');
+const [showTodockInfo, setShowTodockInfo] = useState<
+  'standard' | 'kerosene' | 'triple' | null
+>(null);
 
   const [discounts, setDiscounts] = useState<Record<DiscountKey, boolean>>({
   hotWaterSnow: false,
@@ -196,11 +207,7 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
     ENEOSでんき: [{ name: '標準', type: 'tier', t1: 34, t2: 40, t3: 44 }],
 
     トドック電力: [
-      { name: 'ベーシック', type: 'tier', t1: 34, t2: 40, t3: 44 },
-      { name: '再エネ', type: 'tier', t1: 36, t2: 42, t3: 46 },
-      { name: 'スタンダード', type: 'tier', t1: 34, t2: 40, t3: 44 },
-      { name: '灯油セット', type: 'tier', t1: 33, t2: 39, t3: 43 },
-      { name: 'トリプルセット', type: 'tier', t1: 32, t2: 38, t3: 42 },
+      { name: 'トドック電力', type: 'todock' },
     ],
   };
 
@@ -214,8 +221,7 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
     company === '北ガス電気' &&
     (plan === '従量電灯Bプラス' || plan === '従量電灯Bメイト');
 
-  /* ===== 追加：context ===== */
-  type Context = {
+   type Context = {
     kwh: number;
     amp: number;
     season: string;
@@ -235,7 +241,6 @@ const [showInfo, setShowInfo] = useState<Record<DiscountKey, boolean>>({
     aircon,
   };
 
-/* ===== ここが重要：calculators完全版 ===== */
 const calculators: {
   [K in Plan['type']]: (
     p: Extract<Plan, { type: K }>,
@@ -309,9 +314,36 @@ const calculators: {
 
     return cost * (1 - discount);
   },
+  todock: (p: any, ctx: any) => {
+    const table = {
+      basic: {
+        standard: [35.46, 41.38, 42.99],
+        kerosene: [34.98, 40.78, 42.31],
+        triple: [34.74, 40.48, 41.97],
+      },
+      renewable: {
+        standard: [37.96, 43.88, 45.49],
+        kerosene: [37.48, 43.28, 44.81],
+        triple: [37.24, 42.98, 44.47],
+      },
+    };
+  
+    const rates = table[todockMenu][todockSub];
+  
+    const calc = (k: number) => {
+      if (k <= 120) return Math.ceil(k * rates[0]);
+      if (k <= 280) return Math.ceil(120 * rates[0] + (k - 120) * rates[1]);
+      return Math.ceil(
+        120 * rates[0] +
+        160 * rates[1] +
+        (k - 280) * rates[2]
+      );
+    };
+  
+    return baseTable[ctx.amp] + calc(ctx.kwh);
+  },
 };
 
-/* ===== calcCost ===== */
 const calcCost = (p: Plan) => {
   switch (p.type) {
     case 'tier':
@@ -353,10 +385,14 @@ const calcCost = (p: Plan) => {
       return Math.ceil(
         calculators.kitagas_plus(p, context) * seasonRate[season]
       );
+      case 'todock':
+  return Math.ceil(
+    calculators.todock(p, context) * seasonRate[season]
+  );
+
   }
 };
 
-/* ===== 既存ロジック ===== */
 const currentCost = calcCost(selectedPlan);
 
 let basicRate = 0.02;
@@ -402,6 +438,7 @@ const ranking = Object.keys(companies).map((c) => {
     rate: string;
     desc: string;
   }[] = [
+    
     {
       key: 'hotWaterSnow',
       label: '給湯・暖房・融雪割',
@@ -431,6 +468,12 @@ const ranking = Object.keys(companies).map((c) => {
     },
   ]
   
+  const todockDefs: Record<'standard' | 'kerosene' | 'triple', string> = {
+  standard: '電気のみの契約',
+  kerosene: '電気 ＋ 灯油定期配送の契約',
+  triple: '電気 ＋ 灯油 ＋ ガスの契約',
+};
+
   return (
     <div className="p-4 max-w-md mx-auto">
       <h1 className="text-lg font-bold text-center mb-3">
@@ -540,21 +583,82 @@ const ranking = Object.keys(companies).map((c) => {
           ))}
         </select>
 
-        <select
-          value={plan}
-          onChange={(e) => setPlan(e.target.value)}
-          className="w-full border p-2 mb-2"
-        >
-          {selectedPlans.map((p: any) => (
-            <option key={p.name}>{p.name}</option>
-          ))}
-        </select>
+ {company !== 'トドック電力' && (
+  <select
+    value={plan}
+    onChange={(e) => setPlan(e.target.value)}
+    className="w-full border p-2 mb-2"
+  >
+    {selectedPlans.map((p: any) => (
+      <option key={p.name}>{p.name}</option>
+    ))}
+  </select>
+)}
 
-        {company === '北ガス電気' && plan === '従量電灯Bプラス' && (
-          <div className="bg-yellow-50 p-2 text-xs mb-2">
-            北ガスとセットのプラン
-          </div>
-        )}
+{company === 'トドック電力' && (
+  <div className="mb-2">
+    <select
+      value={todockMenu}
+      onChange={(e) =>
+        setTodockMenu(e.target.value as 'basic' | 'renewable')
+      }
+      className="w-full border p-2 mb-2"
+    >
+      <option value="basic">ベーシック</option>
+      <option value="renewable">再エネ</option>
+    </select>
+
+    <div className="bg-green-50 p-2 rounded">
+  <p className="text-xs mb-1 font-bold">セット選択</p>
+
+  {(
+  [
+    { key: 'standard', label: 'スタンダード' },
+    { key: 'kerosene', label: '灯油セット' },
+    { key: 'triple', label: 'トリプルセット' },
+  ] as const
+).map((s) => (
+    <div key={s.key} className="mb-1">
+
+      <button
+        onClick={() =>
+          setTodockSub(s.key as 'standard' | 'kerosene' | 'triple')
+        }
+        className={`px-2 py-1 mr-1 border rounded ${
+          todockSub === s.key ? 'bg-green-500 text-white' : 'bg-white'
+        }`}
+      >
+        {s.label}
+      </button>
+
+      <button
+        onClick={() =>
+          setShowTodockInfo(
+            showTodockInfo === s.key ? null : s.key
+          )
+        }
+        className="px-2 py-1 border rounded bg-gray-100 text-xs"
+      >
+        ?
+      </button>
+
+      {showTodockInfo === s.key && (
+        <div className="bg-white border p-1 mt-1 text-xs">
+          {todockDefs[s.key]}
+        </div>
+      )}
+
+    </div>
+  ))}
+</div>
+  </div>
+)}
+
+{company === '北ガス電気' && plan === '従量電灯Bプラス' && (
+  <div className="bg-yellow-50 p-2 text-xs mb-2">
+    北ガスとセットのプラン
+  </div>
+)}
         {company === '北ガス電気' && plan === '従量電灯Bメイト' && (
           <div className="bg-yellow-50 p-2 text-xs mb-2">
             道内都市ガス事業者とセットのプラン
@@ -695,22 +799,9 @@ const ranking = Object.keys(companies).map((c) => {
           円
         </p>
       </div>
-
-      <div className="bg-gray-100 p-3 text-sm rounded">
-        {sorted.map((c, i) => (
-          <div
-            key={i}
-            className={`flex justify-between ${
-              i === 0 ? 'text-green-600 font-bold' : ''
-            }`}
-          >
-            <span>
-              {i + 1}位 {c.name}
-            </span>
-            <span>{c.cost.toFixed(0)}円</span>
-          </div>
-        ))}
-      </div>
-    </div>
+      <p className="text-xs text-gray-500 text-center mt-2">
+  　　　※燃料調整費、再エネ賦課金、ドコモでんきセット割は計算に含まれていません。
+    　</p>
+　　　　</div>
   );
 }
