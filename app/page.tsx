@@ -789,15 +789,25 @@ const ranking = Object.keys(companies).map((c) => {
       <div className="bg-yellow-100 p-3 text-center mb-3 rounded">
         <p>現在：{currentCost.toFixed(0)}円/月</p>
 
-        <p className="mt-2">
+        <p
+  className={`mt-2 font-bold ${
+    diffBasic >= 0 ? 'text-lime-600' : 'text-red-500'
+  }`}
+>
           Basic：{docomoBasic.toFixed(0)}円（dポイント充当後）
-          <br />月{diffBasic.toFixed(0)}円安い / 年{(diffBasic * 12).toFixed(0)}
+          <br />月{Math.abs(diffBasic).toFixed(0)}円
+{diffBasic >= 0 ? '安い' : '高い'} / 年{(diffBasic * 12).toFixed(0)}
           円
         </p>
 
-        <p className="mt-2">
+        <p
+  className={`mt-2 font-bold ${
+    diffGreen >= 0 ? 'text-lime-600' : 'text-red-500'
+  }`}
+>
           Green：{docomoGreen.toFixed(0)}円（dポイント充当後）
-          <br />月{diffGreen.toFixed(0)}円安い / 年{(diffGreen * 12).toFixed(0)}
+          <br />月{Math.abs(diffGreen).toFixed(0)}円
+{diffGreen >= 0 ? '安い' : '高い'} / 年{(diffGreen * 12).toFixed(0)}
           円
         </p>
       </div>
